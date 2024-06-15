@@ -7,49 +7,18 @@ import Container from '../../Components/Container';
 import {useAppDispatch} from '../../Store/MainStore';
 import {setAuthToken} from '../../Store/Slices/AuthSlice';
 import {LocalStorage} from '../../Utils/Resource/localStorage';
-import {showError, toTitleCase} from '../../Utils/helperFunction';
+import {showError, showSuccess, toTitleCase} from '../../Utils/helperFunction';
 import auth from '@react-native-firebase/auth';
 import {addUser, getUser} from '../../Services/Collections';
 import VirtualizedScrollView from '../../Components/VirtualisedScroll';
 import RoutesName from '../../Utils/Resource/RoutesName';
-const Login = ({navigation}) => {
+const SignUp = ({navigation}) => {
   const [loading, setLoading] = useState(false);
   const validationSchema = Yup.object().shape({
     email: Yup.string().required().email("Well that's not an email"),
     password: Yup.string().required().min(2, 'Pretty sure this will be hacked'),
   });
 
-  const dispatch = useAppDispatch();
-  const _onLoginPressed = async values => {
-    try {
-      setLoading(true);
-      const response = await auth().signInWithEmailAndPassword(
-        values.email,
-        values.password,
-      );
-      setLoading(false);
-      await getUser(response.user.uid);
-      LocalStorage.storeToken(response.user.uid);
-      dispatch(setAuthToken(response.user.uid));
-      console.log('🚀 ~ Login ~ response:', response.user.uid);
-    } catch (error) {
-      setLoading(false);
-
-      if (error.code === 'auth/email-already-in-use') {
-        console.log('That email address is already in use!');
-        showError('That email address is already in use!');
-      }
-
-      if (error.code === 'auth/invalid-email') {
-        console.log('That email address is invalid!');
-        showError('That email address is invalid!');
-      }
-      if (error.code === 'auth/invalid-credential') {
-        console.log('Invalid user credential');
-        showError('Invalid user credential');
-      }
-    }
-  };
   const _onSignupPressed = async values => {
     try {
       setLoading(true);
@@ -59,7 +28,9 @@ const Login = ({navigation}) => {
       );
       setLoading(false);
       await addUser(response.user);
-      console.log('🚀 ~ Login ~ response:', response);
+      showSuccess('Account created successfully');
+      navigation.navigate(RoutesName.LOGIN);
+      console.log('🚀 ~ SignUp ~ response:', response);
     } catch (error) {
       setLoading(false);
 
@@ -97,11 +68,11 @@ const Login = ({navigation}) => {
               alignItems: 'center',
               marginVertical: 20,
             }}>
-            <Text variant="headlineMedium">Login</Text>
+            <Text variant="headlineMedium">Create new account</Text>
           </View>
           <Formik
             initialValues={{email: '', password: ''}}
-            onSubmit={_onLoginPressed}
+            onSubmit={_onSignupPressed}
             validationSchema={validationSchema}>
             {({handleChange, handleBlur, handleSubmit, values, errors}) => {
               return (
@@ -139,21 +110,13 @@ const Login = ({navigation}) => {
                   <HelperText type="error" visible={!!errors.password}>
                     {toTitleCase(errors.password)}
                   </HelperText>
-                  <View style={styles.forgotPassword}>
-                    <TouchableOpacity
-                      onPress={() =>
-                        navigation.navigate('ForgotPasswordScreen')
-                      }>
-                      <Text style={styles.label}>Forgot your password?</Text>
-                    </TouchableOpacity>
-                  </View>
 
                   <Button
                     mode="contained"
                     onPress={handleSubmit}
                     loading={loading}
                     disabled={loading}>
-                    Login
+                    Sign Up
                   </Button>
                   <Text
                     style={{
@@ -165,8 +128,8 @@ const Login = ({navigation}) => {
                   </Text>
                   <Button
                     mode="outlined"
-                    onPress={() => navigation.navigate(RoutesName.SIGNUP)}>
-                    Sign Up
+                    onPress={() => navigation.navigate(RoutesName.LOGIN)}>
+                    Login
                   </Button>
                 </View>
               );
@@ -178,7 +141,7 @@ const Login = ({navigation}) => {
   );
 };
 
-export default Login;
+export default SignUp;
 const styles = StyleSheet.create({
   forgotPassword: {
     width: '100%',

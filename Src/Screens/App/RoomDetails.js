@@ -1,8 +1,8 @@
 import moment from 'moment';
 import React, {useEffect, useMemo, useState} from 'react';
-import {FlatList, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {FlatList, StyleSheet, TouchableOpacity, View} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import {FAB, IconButton} from 'react-native-paper';
+import {FAB, IconButton, Text, useTheme} from 'react-native-paper';
 import Container from '../../Components/Container';
 import AddRoomModal from '../../Components/Modals/AddRoomModal';
 import AddTenetModal from '../../Components/Modals/AddTenetModal';
@@ -18,22 +18,33 @@ import {
 } from '../../Store/Slices/AuthSlice';
 import RoutesName from '../../Utils/Resource/RoutesName';
 import Header from '../../Components/Header/Header';
+import {onOpenDialer} from '../../Utils/helperFunction';
+import Loader from '../../Components/Loader';
+import {RefreshControl} from 'react-native';
 
 const RoomDetails = ({navigation}) => {
   const selectedRoom = useTypedSelector(selectSelectedRoom);
   const selectedRoomTenets = useTypedSelector(selectRoomTenants);
   const [visible, setVisible] = useState(false);
   const [visibleTenet, setVisibleTenet] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const {colors} = useTheme();
 
   useEffect(() => {
     const init = async () => {
+      setLoading(true);
       await getUserRoomsTenants();
+      setLoading(false);
     };
     init();
   }, [selectedRoom]);
 
   const onPress = async tenet => {
+    setLoading(true);
     await getUserRoomsTenantsDetails(tenet.tenantId);
+    setLoading(false);
+
     navigation.navigate(RoutesName.MONTHLY_BREAKDOWN);
   };
 
@@ -43,10 +54,23 @@ const RoomDetails = ({navigation}) => {
     );
   }, [selectedRoom.currentTenantId, selectedRoomTenets]);
 
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await getUserRoomsTenants();
+    setRefreshing(false);
+  }, []);
   return (
     <Container>
       <Header title={selectedRoom?.roomName} />
+
       <VirtualizedScrollView
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+          />
+        }
         contentContainerStyle={{paddingHorizontal: 20, flex: 1}}>
         <LinearGradient
           useAngle={true}
@@ -69,9 +93,14 @@ const RoomDetails = ({navigation}) => {
           </View>
           <View style={styles.roomDetailsCardItem}>
             <Text style={styles.cardDetailItemText}>Mobile </Text>
-            <Text style={styles.cardDetailItemText}>
-              {currentTenet?.phone || '-'}
-            </Text>
+            <TouchableOpacity
+              onPress={() =>
+                currentTenet?.phone && onOpenDialer(currentTenet?.phone)
+              }>
+              <Text style={styles.cardDetailItemText}>
+                {currentTenet?.phone || '-'}
+              </Text>
+            </TouchableOpacity>
           </View>
           <View style={styles.roomDetailsCardItem}>
             <Text style={styles.cardDetailItemText}>Room rent </Text>
@@ -121,7 +150,9 @@ const RoomDetails = ({navigation}) => {
           contentContainerStyle={{flexGrow: 1}}
           data={selectedRoomTenets}
           renderItem={({item}) => {
-            if (currentTenet?.tenantId === item?.tenantId) return null;
+            if (currentTenet?.tenantId === item?.tenantId) {
+              return null;
+            }
             return (
               <TouchableOpacity
                 style={styles.currentTenantCard}
@@ -146,6 +177,7 @@ const RoomDetails = ({navigation}) => {
           }}
         />
       </VirtualizedScrollView>
+      {loading && <Loader />}
       <FAB
         icon="plus"
         style={styles.fab}

@@ -1,25 +1,20 @@
 import {NavigationContainer} from '@react-navigation/native';
 import React, {useEffect} from 'react';
-import {StatusBar, StyleSheet} from 'react-native';
+import {StatusBar} from 'react-native';
 import FlashMessage from 'react-native-flash-message';
 import {
   MD3LightTheme as DefaultTheme,
   PaperProvider,
   configureFonts,
 } from 'react-native-paper';
+import SplashScreen from './Src/Components/SplashScreen';
 import Route from './Src/Routes';
-import {LocalStorage} from './Src/Utils/Resource/localStorage';
+import {getUser, getUserRooms} from './Src/Services/Collections';
 import {useAppDispatch} from './Src/Store/MainStore';
 import {setAuthToken} from './Src/Store/Slices/AuthSlice';
-import {
-  getUser,
-  getUserRooms,
-  getRoomDetails,
-  getUserRoomsTenants,
-  addUserRoom,
-  getUserRoomsTenantsDetails,
-} from './Src/Services/Collections';
+import {LocalStorage} from './Src/Utils/Resource/localStorage';
 const App = () => {
+  const [splash, setSplash] = React.useState(true);
   const dispatch = useAppDispatch();
   const fontConfig = {
     android: {
@@ -83,21 +78,23 @@ const App = () => {
   };
   useEffect(() => {
     const init = async () => {
+      setSplash(true);
       // const LocalData = await LocalStorage.getUser();
       const LocalToken = await LocalStorage.getToken();
       if (LocalToken) {
         dispatch(setAuthToken(LocalToken));
         await getUser(LocalToken);
         await getUserRooms();
-        // await getRoomDetails();
-        // await getUserRoomsTenants();
-        // // await addUserRoom()
-        // await getUserRoomsTenantsDetails()
-        // dispatch(setUserProfile(LocalData));
       }
+      setSplash(false);
     };
     init();
   }, [dispatch]);
+
+  if (splash) {
+    return <SplashScreen />;
+  }
+
   return (
     <PaperProvider theme={theme}>
       <StatusBar

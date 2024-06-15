@@ -7,4 +7,5 @@ export default {
   TENANT: 'Tenant',
   ROOM_DETAILS: 'RoomDetails',
   MONTHLY_BREAKDOWN: 'MonthlyBreakdown',
+  PROFILE: 'Profile',
 };

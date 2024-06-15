@@ -1,6 +1,7 @@
 import {showMessage} from 'react-native-flash-message';
 import {request} from 'react-native-permissions';
-import {Linking, Platform} from 'react-native';
+import {Alert, Linking, Platform} from 'react-native';
+import {useCallback} from 'react';
 
 // import {NoProfile} from '../assets';
 
@@ -49,7 +50,9 @@ const addColorToDataArray = (dataArray = [], colorArray = []) => {
 
 const searchByFields = (arr, input, keyArr) => {
   const results = arr?.filter(function (p) {
-    if (input?.length == 0) return false;
+    if (input?.length == 0) {
+      return false;
+    }
     if (keyArr?.length > 0) {
       var data = keyArr.map(ele => p[ele]).join(' ');
       return data.match(new RegExp(input, 'i'));
@@ -126,6 +129,43 @@ function sumArrayOfObjects(array, property) {
   }
   return sum;
 }
+
+const sendWhatsAppMessage = (text, phone) => {
+  let link = 'whatsapp://send?text=' + text + '&phone=' + `+91${phone}`;
+
+  if (link) {
+    Linking.openURL(link)
+      .then(supported => {
+        console.log(
+          '🛺 ~ file: Helper.js:390 ~ sendWhatsAppMessage ~ supported:',
+          supported,
+        );
+        if (!supported) {
+          Alert.alert(
+            'Please install whatsapp to send direct message to Developer via whats app',
+          );
+        } else {
+          return Linking.openURL(link);
+        }
+      })
+      .catch(err => {
+        Alert.alert(
+          'Please install whatsapp to send direct message to Developer via whats app',
+        );
+      });
+  } else {
+    Alert.alert(
+      'Please install whatsapp to send direct message to Developer via whats app',
+    );
+    console.log('sendWhatsAppMessage -----> ', 'message link is undefined');
+  }
+};
+const onSendSMSMessage = async (message, phoneNumber) => {
+  const separator = Platform.OS === 'ios' ? '&' : '?';
+  const url = `sms:${phoneNumber}${separator}body=${message}`;
+  await Linking.openURL(url);
+};
+const onOpenDialer = phone => Linking.openURL(`tel:${phone}`);
 export {
   addColorToDataArray,
   getColor,
@@ -140,4 +180,7 @@ export {
   generateUniqueId,
   sortByTimestamp,
   sumArrayOfObjects,
+  sendWhatsAppMessage,
+  onSendSMSMessage,
+  onOpenDialer,
 };

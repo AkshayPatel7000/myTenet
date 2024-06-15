@@ -12,7 +12,7 @@ import {
 
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import RoutesName from '../../Utils/Resource/RoutesName';
-import {Home, MyTenant} from '../../Screens';
+import {Home, MyTenant, Profile} from '../../Screens';
 import {Icon, MD3Colors, withTheme} from 'react-native-paper';
 
 const BottomTab = createBottomTabNavigator();
@@ -147,6 +147,16 @@ const BottomTabs = ({theme}) => {
           iconInActiveColor: theme.colors.onPrimary,
         }}
         component={MyTenant}
+      />
+      <BottomTab.Screen
+        name={RoutesName.PROFILE}
+        options={{
+          icon: 'face-man-profile',
+          iconInActive: 'face-man-profile',
+          iconColor: theme.colors.primary,
+          iconInActiveColor: theme.colors.onPrimary,
+        }}
+        component={Profile}
       />
     </BottomTab.Navigator>
   );

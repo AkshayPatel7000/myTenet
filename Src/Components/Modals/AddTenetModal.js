@@ -1,22 +1,18 @@
-import {StyleSheet, Text, View} from 'react-native';
+import {Formik} from 'formik';
 import React, {useState} from 'react';
+import {StyleSheet, View} from 'react-native';
 import {
   Button,
   HelperText,
   IconButton,
   Modal,
   Portal,
+  Text,
   TextInput,
 } from 'react-native-paper';
-import {Formik} from 'formik';
-import * as Yup from 'yup';
-import {
-  addRoomTenet,
-  addUserRoom,
-  updateUserRoom,
-} from '../../Services/Collections';
-import DatePiker from './DatePiker';
 import {DatePickerInput} from 'react-native-paper-dates';
+import * as Yup from 'yup';
+import {addRoomTenet, updateUserRoom} from '../../Services/Collections';
 
 const AddTenetModal = ({visible, hideModal, editData}) => {
   const [loading, setLoading] = useState(false);
@@ -29,9 +25,14 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
 
   const validationSchema = Yup.object().shape({
     name: Yup.string().required('Tenet name amount is required!'),
-    phone: Yup.string().required('Tenet phone amount is required!'),
+    phone: Yup.string()
+      .required('Phone no. is required!')
+      .matches(
+        /^(?:(?:\+|0{0,2})|[0]?)?[6789]\d{9}$/,
+        'Enter a valid phone no.',
+      ),
     startDate: Yup.string().required('Tenet start date is required!'),
-    aadharNo: Yup.string(),
+    aadharNo: Yup.string().matches(/^\d{12}$/, 'Enter a valid aadhar no.'),
   });
 
   const _onAddPress = async values => {

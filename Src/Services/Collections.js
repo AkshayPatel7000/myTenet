@@ -33,11 +33,12 @@ const addUser = async user => {
 };
 const getUser = async userId => {
   try {
-    const data = await firestore().collection('users').doc(userId).get();
+    const userID = userId || store?.getState()?.AuthSlice?.userProfile?.uid;
+    const data = await firestore().collection('users').doc(userID).get();
     if (data?.exists) {
       // console.log('🚀 ~ getUser ~ if data:', {...data.data(), uid: userId});
       // showSuccess('User Found');
-      store.dispatch(setUserProfile({...data.data(), uid: userId}));
+      store.dispatch(setUserProfile({...data.data(), uid: userID}));
     } else {
       console.log('🚀 ~ getUser ~ else:', data);
       showError('User Not Found');
@@ -45,6 +46,21 @@ const getUser = async userId => {
   } catch (error) {
     showError('User Not Found');
     console.log('🚀 ~ getUser ~ error:', error);
+  }
+};
+const updateUser = async user => {
+  try {
+    const userId = store?.getState()?.AuthSlice?.userProfile?.uid;
+    const data = await firestore()
+      .collection('users')
+      .doc(userId)
+      .update({
+        ...user,
+      });
+    await getUser(userId);
+    showSuccess('User details has been updated');
+  } catch (error) {
+    console.log('🚀 ~ updateUser ~ error:', error);
   }
 };
 const getUserRooms = async () => {
@@ -420,4 +436,5 @@ export {
   getUserRoomsTenantsRecord,
   markAsPaidRecord,
   getData,
+  updateUser,
 };

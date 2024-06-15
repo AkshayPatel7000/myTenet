@@ -1,13 +1,6 @@
 import {Formik} from 'formik';
 import React, {useState} from 'react';
-import {
-  Alert,
-  Image,
-  PermissionsAndroid,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import {Alert, Image, PermissionsAndroid, StyleSheet, View} from 'react-native';
 import {
   Button,
   HelperText,
@@ -18,6 +11,7 @@ import {
   TextInput,
   TouchableRipple,
   useTheme,
+  Text,
 } from 'react-native-paper';
 import * as Yup from 'yup';
 import {

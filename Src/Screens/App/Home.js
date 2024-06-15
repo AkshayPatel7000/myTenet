@@ -1,33 +1,44 @@
-import {FlatList, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import moment from 'moment';
 import React, {useEffect, useMemo, useState} from 'react';
+import {RefreshControl, StyleSheet, View} from 'react-native';
+import {
+  ActivityIndicator,
+  IconButton,
+  Surface,
+  Text,
+  useTheme,
+} from 'react-native-paper';
 import Container from '../../Components/Container';
+import Header from '../../Components/Header/Header';
 import VirtualizedScrollView from '../../Components/VirtualisedScroll';
-import {LocalStorage} from '../../Utils/Resource/localStorage';
+import {getData, getUser} from '../../Services/Collections';
 import {useAppDispatch, useTypedSelector} from '../../Store/MainStore';
 import {selectHomeData, setAuthToken} from '../../Store/Slices/AuthSlice';
-import Header from '../../Components/Header/Header';
-import {getData} from '../../Services/Collections';
-import {ActivityIndicator} from 'react-native-paper';
+import {LocalStorage} from '../../Utils/Resource/localStorage';
 import {sumArrayOfObjects} from '../../Utils/helperFunction';
-import moment from 'moment';
+import {useFocusEffect} from '@react-navigation/native';
+import Loader from '../../Components/Loader';
 
 const Home = props => {
-  const dispatch = useAppDispatch();
+  const {colors} = useTheme();
   const homeData = useTypedSelector(selectHomeData);
   const [loading, setLoading] = useState(true);
-  console.log('🚀 ~ Home ~ homeData:', homeData);
-  const Logout = () => {
-    dispatch(setAuthToken(null));
-    LocalStorage.clearLocalStorage();
-  };
+  const styles = getStyles(colors);
+  const [refreshing, setRefreshing] = React.useState(false);
 
-  useEffect(() => {
-    setTimeout(async () => {
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await getData();
+    await getUser();
+    setRefreshing(false);
+  }, []);
+  useFocusEffect(() => {
+    const timer = setTimeout(async () => {
       await getData();
       setLoading(false);
     }, 3000);
-  }, [props]);
-
+    // return clearTimeout(timer);
+  });
   const totalRent = useMemo(() => {
     return sumArrayOfObjects(homeData, 'rent');
   }, [homeData]);
@@ -47,24 +58,50 @@ const Home = props => {
   return (
     <Container>
       <Header back={false} title="Home" />
-      {loading && <ActivityIndicator />}
+      {loading && <Loader />}
       {!loading && (
-        <VirtualizedScrollView contentContainerStyle={{padding: 20}}>
-          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-            <Text>Total Rooms</Text>
-            <Text>{homeData?.length}</Text>
+        <VirtualizedScrollView
+          contentContainerStyle={{padding: 20}}
+          refreshControl={
+            <RefreshControl
+              refreshing={refreshing}
+              onRefresh={onRefresh}
+              colors={[colors.primary]}
+            />
+          }>
+          <View style={styles.rowContainer}>
+            <Surface style={styles.card}>
+              <IconButton
+                icon="home-lightning-bolt"
+                size={50}
+                iconColor="#FFF"
+              />
+              <Text style={styles.title}>Total Rooms</Text>
+              <Text style={styles.title}>{homeData?.length}</Text>
+            </Surface>
+            <Surface style={styles.card}>
+              <IconButton
+                icon="account-child-circle"
+                size={50}
+                iconColor="#FFF"
+              />
+              <Text style={styles.title}>Total Rent</Text>
+              <Text style={styles.title}>₹ {totalRent}</Text>
+            </Surface>
           </View>
-          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-            <Text>Total Rent</Text>
-            <Text>{totalRent}</Text>
-          </View>
-          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-            <Text>Total Electricity Bill</Text>
-            <Text>{totalElectcityRent}</Text>
-          </View>
-          <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
-            <Text>Total Amount</Text>
-            <Text>{totalElectcityRent + totalRent}</Text>
+          <View style={styles.rowContainer}>
+            <Surface style={styles.card}>
+              <IconButton icon="lightning-bolt" size={50} iconColor="#FFF" />
+              <Text style={styles.title}>Total Electricity Bill</Text>
+              <Text style={styles.title}>₹ {totalElectcityRent}</Text>
+            </Surface>
+            <Surface style={styles.card}>
+              <IconButton icon="account-cash" size={50} iconColor="#FFF" />
+              <Text style={styles.title}>Total Amount</Text>
+              <Text style={styles.title}>
+                ₹ {totalElectcityRent + totalRent}
+              </Text>
+            </Surface>
           </View>
 
           {/* <FlatList
@@ -96,4 +133,22 @@ const Home = props => {
 
 export default Home;
 
-const styles = StyleSheet.create({});
+const getStyles = colors => {
+  return StyleSheet.create({
+    card: {
+      width: '48%',
+      height: 160,
+      backgroundColor: colors.primary,
+      borderRadius: 8,
+      // elevation: 8,
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    title: {color: '#fff', fontWeight: '600', fontSize: 16},
+    rowContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginVertical: 10,
+    },
+  });
+};

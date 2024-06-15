@@ -1,4 +1,4 @@
-import {StyleSheet, Text, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import React, {useState} from 'react';
 import {
   Button,
@@ -7,6 +7,7 @@ import {
   Modal,
   Portal,
   TextInput,
+  Text,
 } from 'react-native-paper';
 import {Formik} from 'formik';
 import * as Yup from 'yup';
@@ -24,9 +25,9 @@ const AddRoomModal = ({visible, hideModal, editData}) => {
   };
 
   const validationSchema = Yup.object().shape({
-    roomName: Yup.string().required('Room name amount is required!'),
-    roomNo: Yup.string().required('Room No amount is required!'),
-    rent: Yup.string().required('Room rent amount is required!'),
+    roomName: Yup.string().required('Room name is required!'),
+    roomNo: Yup.string().required('Room No is required!'),
+    rent: Yup.string().required('Room rent is required!'),
     advance: Yup.string().required('Advance amount is required!'),
     perUnit: Yup.string().required('Unit is required!'),
     startReading: Yup.string().required('Start reading is required!'),

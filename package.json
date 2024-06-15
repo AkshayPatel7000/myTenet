@@ -8,7 +8,7 @@
     "lint": "eslint .",
     "start": "react-native start",
     "test": "jest",
-    "build":"cd android && ./gradlew clean && ./gradlew assembleRelease && cd .. && nautilus android/app/build/outputs/apk/release"
+    "build": "cd android && ./gradlew clean && ./gradlew assembleRelease && cd .. && nautilus android/app/build/outputs/apk/release"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^1.18.2",
@@ -26,7 +26,7 @@
     "appcenter-crashes": "^5.0.1",
     "formik": "^2.4.6",
     "lottie-ios": "3.4.0",
-    "lottie-react-native": "^5.1.4",
+    "lottie-react-native": "^6.7.2",
     "moment": "^2.29.1",
     "react": "18.2.0",
     "react-native": "0.74.0",

@@ -1,10 +1,10 @@
 import React, {useState} from 'react';
-import {FlatList, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import {FAB} from 'react-native-paper';
+import {FlatList, StyleSheet, TouchableOpacity, View} from 'react-native';
+import {FAB, Text, useTheme} from 'react-native-paper';
 import Container from '../../Components/Container';
 import AddRoomModal from '../../Components/Modals/AddRoomModal';
 import VirtualizedScrollView from '../../Components/VirtualisedScroll';
-import {getRoomDetails} from '../../Services/Collections';
+import {getRoomDetails, getUserRooms} from '../../Services/Collections';
 import {useTypedSelector} from '../../Store/MainStore';
 import {selectUserRooms} from '../../Store/Slices/AuthSlice';
 import RoutesName from '../../Utils/Resource/RoutesName';
@@ -12,19 +12,41 @@ import Header from '../../Components/Header/Header';
 import moment from 'moment';
 import {Image} from 'react-native';
 import SVG from '../../Assets/SVG';
+import Loader from '../../Components/Loader';
+import {RefreshControl} from 'react-native';
 
 const MyTenant = ({navigation}) => {
   const [visible, setVisible] = useState(false);
+  const [loading, setLoading] = useState(false);
   const rooms = useTypedSelector(selectUserRooms);
+  const {colors} = useTheme();
+  const [refreshing, setRefreshing] = React.useState(false);
+
   const onPress = async room => {
+    setLoading(true);
     await getRoomDetails(room.roomId);
+    setLoading(false);
     navigation.navigate(RoutesName.ROOM_DETAILS);
   };
 
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await getUserRooms();
+    setRefreshing(false);
+  }, []);
   return (
     <Container>
       <Header back={false} title="My Rooms" />
-      <VirtualizedScrollView contentContainerStyle={{padding: 20}}>
+      {loading && <Loader />}
+      <VirtualizedScrollView
+        contentContainerStyle={{padding: 20}}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.primary]}
+          />
+        }>
         <FlatList
           data={rooms}
           ItemSeparatorComponent={<View style={{height: 15}} />}

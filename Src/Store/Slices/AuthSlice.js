@@ -40,6 +40,9 @@ const slice = createSlice({
     setHomeData: (state, action) => {
       state.homeData = action.payload;
     },
+    setUserData: (state, action) => {
+      state.userData = action.payload;
+    },
     resetAuthSlice: (state, action) => {
       state = {
         authToken: '',
@@ -47,6 +50,10 @@ const slice = createSlice({
         userProfile: {},
         userRooms: [],
         selectedRoom: {},
+        roomTenants: [],
+        selectedTenant: {},
+        roomTenantRecords: [],
+        homeData: [],
       };
     },
   },
@@ -62,6 +69,8 @@ export const {
   setRoomTenants,
   setRoomTenantRecords,
   setHomeData,
+  setUserData,
+  resetAuthSlice,
 } = slice.actions;
 
 export default slice.reducer;
@@ -74,5 +83,6 @@ export const selectSelectedRoom = state => state.AuthSlice.selectedRoom;
 export const selectSelectedTenant = state => state.AuthSlice.selectedTenant;
 export const selectRoomTenants = state => state.AuthSlice.roomTenants;
 export const selectHomeData = state => state.AuthSlice.homeData;
+
 export const selectRoomTenantRecords = state =>
   state.AuthSlice.roomTenantRecords;
