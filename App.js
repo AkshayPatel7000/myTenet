@@ -86,7 +86,8 @@ const App = () => {
         await getUser(LocalToken);
         await getUserRooms();
       }
-      setSplash(false);
+
+      setTimeout(() => setSplash(false), 3000);
     };
     init();
   }, [dispatch]);

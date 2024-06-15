@@ -51,7 +51,6 @@ const Home = props => {
         return {value: 0};
       }
     });
-    console.log('🚀 ~ paidAmount ~ paidAmount:', paidAmount);
 
     return sumArrayOfObjects(paidAmount, 'value');
   }, [homeData]);
