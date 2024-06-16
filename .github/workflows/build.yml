@@ -68,8 +68,8 @@ jobs:
       - name: Find APK file
         id: find-apk
         run: |
-          ls -la app/build/outputs/apk/release/
-          apk_path=$(find app/build/outputs/apk/release/ -name "*.apk" -print -quit)
+          ls -la android/app/build/outputs/apk/release/
+          apk_path=$(find android/app/build/outputs/apk/release/ -name "*.apk" -print -quit)
           echo "::set-output name=apk_path::$apk_path"
           
       - name: Upload APK artifact
