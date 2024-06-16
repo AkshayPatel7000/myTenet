@@ -45,12 +45,12 @@ jobs:
           retries=0
           apk_found=false
           echo "$apk_name"
-          ls -la
+          ls -la app/build/outputs/apk/release/
           
           # Loop to wait and retry if APK file is not found
           while [ $retries -lt $max_retries ]; do
-            if [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
-              mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/$apk_name
+            if [ -f app/build/outputs/apk/release/app-release.apk ]; then
+              mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/$apk_name
               apk_found=true
               break
             else
