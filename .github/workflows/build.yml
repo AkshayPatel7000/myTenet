@@ -62,29 +62,6 @@ jobs:
           if ! $apk_found; then
             echo "Error: APK file not found after $max_retries attempts."
             exit 1
-          fi# Define maximum retry attempts and delay (in seconds)
-          max_retries=3
-          retry_delay=5
-          retries=0
-          apk_found=false
-          
-          # Loop to wait and retry if APK file is not found
-          while [ $retries -lt $max_retries ]; do
-            if [ -f android/app/build/outputs/apk/release/app-release.apk ]; then
-              mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/$apk_name
-              apk_found=true
-              break
-            else
-              retries=$((retries+1))
-              echo "APK file not found. Retrying in $retry_delay seconds... (Attempt $retries of $max_retries)"
-              sleep $retry_delay
-            fi
-          done
-          
-          # If after retries APK is still not found, exit with an error
-          if ! $apk_found; then
-            echo "Error: APK file not found after $max_retries attempts."
-            exit 1
           fi
       - name: Upload Artifact
         uses: actions/upload-artifact@v1
