@@ -134,11 +134,11 @@ const MonthlyBreakdown = ({navigation}) => {
                     {moment(item.createdAt).format('MMMM YYYY')}
                   </Text>
                   <View style={styles.textInfoContainer}>
-                    <Text style={styles.title}>Previous Reading</Text>
+                    <Text style={styles.title}>Current Reading</Text>
                     <Text>{Number(item.currentReading)}</Text>
                   </View>
                   <View style={styles.textInfoContainer}>
-                    <Text style={styles.title}>Current Reading</Text>
+                    <Text style={styles.title}>Previous Reading</Text>
                     <Text>{Number(item?.previousReading)}</Text>
                   </View>
                   <View style={styles.textInfoContainer}>
