@@ -44,6 +44,8 @@ jobs:
           retry_delay=5
           retries=0
           apk_found=false
+          echo "$apk_name"
+          ls -la
           
           # Loop to wait and retry if APK file is not found
           while [ $retries -lt $max_retries ]; do
