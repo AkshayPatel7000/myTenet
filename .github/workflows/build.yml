@@ -65,10 +65,15 @@ jobs:
             echo "Error: APK file not found after $max_retries attempts."
             exit 1
           fi
-      - name: Upload Artifact
+      - name: Find APK file
+        id: find-apk
+        run: |
+          ls -la app/build/outputs/apk/release/
+          apk_path=$(find app/build/outputs/apk/release/ -name "*.apk" -print -quit)
+          echo "::set-output name=apk_path::$apk_path"
+          
+      - name: Upload APK artifact
         uses: actions/upload-artifact@v1
         with:
-          run: |
-            ls -la android/app/build/outputs/apk/release/
-          name: ${{ steps.build-android.outputs.apk_name }}
-          path: android/app/build/outputs/apk/release/$apk_name
+          name: My_Rooms-${{ github.run_number }}
+          path: ${{ steps.find-apk.outputs.apk_path }}
