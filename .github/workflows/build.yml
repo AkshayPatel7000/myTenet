@@ -36,8 +36,12 @@ jobs:
       - name: Build Android Release
         run: |
           cd android && chmod +x ./gradlew && ./gradlew assembleRelease
+          # Generate a unique file name based on timestamp
+          timestamp=$(date +"%d%m_%H%M")
+          apk_name="My Rooms_$timestamp.apk"
+          mv android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/$apk_name
       - name: Upload Artifact
         uses: actions/upload-artifact@v1
         with:
-          name: app-release.apk
-          path: android/app/build/outputs/apk/release/
+          name: ${{ steps.build-android.outputs.apk_name }}
+          path: android/app/build/outputs/apk/release/$apk_name
