@@ -77,3 +77,16 @@ jobs:
         with:
           name: My_Rooms-${{ github.run_number }}
           path: ${{ steps.find-apk.outputs.apk_path }}
+
+  retrieve-artifact-url:
+    needs: upload-artifact
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: My_Rooms-${{ github.run_number }}
+
+      - name: Print artifact URL
+        run: |
+          echo "Artifact download URL: ${{ steps.download-artifact.outputs.download-url }}"
