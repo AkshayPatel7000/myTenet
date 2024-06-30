@@ -15,16 +15,22 @@ import {
   setUserProfile,
   setUserRooms,
 } from '../Store/Slices/AuthSlice';
-import {tr} from 'react-native-paper-dates';
 import moment from 'moment';
 const addUser = async user => {
-  const {uid, email} = user;
+  const {uid, email, displayName, photoURL} = user;
   try {
-    const data = await firestore().collection('users').doc(uid).set({
-      uid,
-      email,
-    });
-    if (data._documentPath._parts.at(-1)) {
+    const data = await firestore()
+      .collection('users')
+      .doc(uid)
+      .set({
+        uid,
+        email,
+        name: displayName || '',
+        picture: photoURL || '',
+      });
+    console.log('🚀 ~ addUser ~ data:', data);
+
+    if (data?._documentPath._parts?.at(-1)) {
       showSuccess('addUser has been Added');
     }
   } catch (error) {
@@ -149,6 +155,24 @@ const updateUserRoom = async updateData => {
     console.log('🚀 ~ updateUserRoom ~ error:', error);
   }
 };
+const removeUserRoom = async roomID => {
+  try {
+    const userId = store?.getState()?.AuthSlice?.userProfile?.uid;
+    const roomId = roomID;
+    console.log('🚀 ~ removeUserRoom ~ roomId:', roomId);
+    await firestore()
+      .collection('users')
+      .doc(userId)
+      .collection('rooms')
+      .doc(roomId)
+      .delete();
+
+    await getUserRooms();
+    showSuccess('Room Deleted');
+  } catch (error) {
+    console.log('🚀 ~ updateUserRoom ~ error:', error);
+  }
+};
 const getUserRoomsTenants = async () => {
   try {
     const userId = store?.getState()?.AuthSlice?.userProfile?.uid;
@@ -234,11 +258,10 @@ const addRoomTenet = async (tenet, roomID) => {
     return error;
   }
 };
-const updateRoomTenet = async updateData => {
+const updateRoomTenet = async (updateData, userData) => {
   try {
     const roomId = store?.getState()?.AuthSlice?.selectedRoom.roomId;
     const userId = store?.getState()?.AuthSlice?.userProfile?.uid;
-    const tenantId = store?.getState()?.AuthSlice?.selectedTenant?.tenantId;
 
     const data = await firestore()
       .collection('users')
@@ -246,11 +269,21 @@ const updateRoomTenet = async updateData => {
       .collection('rooms')
       .doc(roomId)
       .collection('Tenants')
-      .doc(tenantId)
+      .doc(userData.tenantId)
       .update({
         ...updateData,
+        startDate: moment(updateData?.startDate).format('DD-MMMM-YYYY'),
       });
-
+    console.log({
+      currentTenantId: userData.tenantId,
+      tenetName: updateData?.name,
+      startDate: updateData?.startDate,
+    });
+    await updateUserRoom({
+      currentTenantId: userData.tenantId,
+      tenetName: updateData?.name,
+      startDate: moment(updateData?.startDate).format('DD-MMMM-YYYY'),
+    });
     await getUserRoomsTenants();
 
     return data;
@@ -259,6 +292,28 @@ const updateRoomTenet = async updateData => {
     return error;
   }
 };
+const removeRoomTenet = async userData => {
+  try {
+    const roomId = store?.getState()?.AuthSlice?.selectedRoom.roomId;
+    const userId = store?.getState()?.AuthSlice?.userProfile?.uid;
+
+    const data = await firestore()
+      .collection('users')
+      .doc(userId)
+      .collection('rooms')
+      .doc(roomId)
+      .collection('Tenants')
+      .doc(userData.tenantId)
+      .delete();
+    await getUserRoomsTenants();
+    showSuccess('Tenet Deleted');
+    return data;
+  } catch (error) {
+    console.log('🚀 ~ removeRoomTenet ~ error:', error);
+    return error;
+  }
+};
+
 const addUserRoomsTenantsRecord = async values => {
   try {
     const userId = store?.getState()?.AuthSlice?.userProfile?.uid;
@@ -437,4 +492,7 @@ export {
   markAsPaidRecord,
   getData,
   updateUser,
+  updateRoomTenet,
+  removeRoomTenet,
+  removeUserRoom,
 };

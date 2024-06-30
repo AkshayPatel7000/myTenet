@@ -14,6 +14,9 @@ import {Formik} from 'formik';
 import * as Yup from 'yup';
 import {updateUser} from '../../Services/Collections';
 import MyDialog from '../../Components/Modals/Dialog';
+import auth from '@react-native-firebase/auth';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
+
 const Profile = () => {
   const [visible, setVisible] = useState(false);
   const user = useTypedSelector(selectUserProfile);
@@ -30,8 +33,10 @@ const Profile = () => {
       ),
     upi: Yup.string().required('UPI address is required!'),
   });
-  const Logout = () => {
+  const Logout = async () => {
     // setVisible(true);
+    await auth().signOut();
+    await GoogleSignin.revokeAccess();
     dispatch(setAuthToken(null));
     dispatch(resetAuthSlice({}));
 

@@ -13,6 +13,12 @@ import {getUser, getUserRooms} from './Src/Services/Collections';
 import {useAppDispatch} from './Src/Store/MainStore';
 import {setAuthToken} from './Src/Store/Slices/AuthSlice';
 import {LocalStorage} from './Src/Utils/Resource/localStorage';
+import {GestureHandlerRootView} from 'react-native-gesture-handler';
+import {
+  DatePickerModal,
+  en,
+  registerTranslation,
+} from 'react-native-paper-dates';
 const App = () => {
   const [splash, setSplash] = React.useState(true);
   const dispatch = useAppDispatch();
@@ -77,6 +83,7 @@ const App = () => {
     fonts: configureFonts({config: fontConfig}),
   };
   useEffect(() => {
+    registerTranslation('en', en);
     const init = async () => {
       setSplash(true);
       // const LocalData = await LocalStorage.getUser();
@@ -97,22 +104,24 @@ const App = () => {
   }
 
   return (
-    <PaperProvider theme={theme}>
-      <StatusBar
-        backgroundColor="transparent"
-        translucent={true}
-        barStyle={'dark-content'}
-      />
-      <NavigationContainer
-        headerMode={false}
-        animationEnabled={true}
-        screenOptions={{
-          headerShown: false,
-        }}>
-        <Route />
-        <FlashMessage duration={8000} floating animated style={{top: 50}} />
-      </NavigationContainer>
-    </PaperProvider>
+    <GestureHandlerRootView style={{flex: 1}}>
+      <PaperProvider theme={theme}>
+        <StatusBar
+          backgroundColor="transparent"
+          translucent={true}
+          barStyle={'dark-content'}
+        />
+        <NavigationContainer
+          headerMode={false}
+          animationEnabled={true}
+          screenOptions={{
+            headerShown: false,
+          }}>
+          <Route />
+          <FlashMessage duration={8000} floating animated style={{top: 50}} />
+        </NavigationContainer>
+      </PaperProvider>
+    </GestureHandlerRootView>
   );
 };
 

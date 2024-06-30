@@ -37,7 +37,12 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
   };
 
   const validationSchema = Yup.object().shape({
-    newReading: Yup.string().required('New Reading is required!'),
+    newReading: Yup.number()
+      .min(
+        Number(room.startReading),
+        `Current reading must be greater then ${room.startReading}`,
+      )
+      .required('New Reading is required!'),
     image: Yup.string(),
     note: Yup.string(),
     isPaid: Yup.bool(),
