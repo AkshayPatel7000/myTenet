@@ -1,7 +1,13 @@
 import {Formik} from 'formik';
 import React, {useState} from 'react';
 import {Image, StyleSheet, TouchableOpacity, View} from 'react-native';
-import {Button, HelperText, Text, TextInput} from 'react-native-paper';
+import {
+  ActivityIndicator,
+  Button,
+  HelperText,
+  Text,
+  TextInput,
+} from 'react-native-paper';
 import * as Yup from 'yup';
 import Container from '../../Components/Container';
 import {useAppDispatch} from '../../Store/MainStore';
@@ -12,6 +18,16 @@ import auth from '@react-native-firebase/auth';
 import {addUser, getUser} from '../../Services/Collections';
 import VirtualizedScrollView from '../../Components/VirtualisedScroll';
 import RoutesName from '../../Utils/Resource/RoutesName';
+import GoogleLogo from '../../Assets/SVG/google-icon.svg';
+import {
+  GoogleSignin,
+  GoogleSigninButton,
+} from '@react-native-google-signin/google-signin';
+GoogleSignin.configure({
+  webClientId:
+    '515928874687-irhbrofvs1bpgmrcd3hpuu510c3epr6f.apps.googleusercontent.com',
+});
+
 const Login = ({navigation}) => {
   const [loading, setLoading] = useState(false);
   const validationSchema = Yup.object().shape({
@@ -50,39 +66,33 @@ const Login = ({navigation}) => {
       }
     }
   };
-  const _onSignupPressed = async values => {
+  const _onGoogleLoginPress = async () => {
     try {
       setLoading(true);
-      const response = await auth().createUserWithEmailAndPassword(
-        values.email,
-        values.password,
-      );
+      await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
+      // Get the users ID token
+      const {idToken} = await GoogleSignin.signIn();
+
+      // Create a Google credential with the token
+      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+
+      // Sign-in the user with the credential
+      const response = await auth().signInWithCredential(googleCredential);
+
+      await addUser(response?.user);
+
+      await getUser(response?.user?.uid);
+
       setLoading(false);
-      await addUser(response.user);
-      console.log('🚀 ~ Login ~ response:', response);
+      LocalStorage.storeToken(response?.user.uid);
+      dispatch(setAuthToken(response?.user.uid));
+      console.log('🚀 ~ const_onGoogleLoginPress= ~ response:', response);
     } catch (error) {
-      setLoading(false);
-
-      if (error.code === 'auth/email-already-in-use') {
-        console.log('That email address is already in use!');
-        showError('That email address is already in use!');
-      }
-
-      if (error.code === 'auth/invalid-email') {
-        console.log('That email address is invalid!');
-        showError('That email address is invalid!');
-      }
-      if (error.code === 'auth/invalid-credential') {
-        console.log('Invalid user credential');
-        showError('Invalid user credential');
-      }
+      console.log('🚀 ~ Login ~ error:', error);
     }
-    // LocalStorage.storeToken('dddddd');
-    // dispatch(setAuthToken('dddddddd'));
   };
-
   return (
-    <Container contentContainerStyle={{padding: 20, flex: 1}}>
+    <Container contentContainerStyle={{margin: 20, flex: 1}}>
       <VirtualizedScrollView>
         <View>
           <View>
@@ -105,7 +115,7 @@ const Login = ({navigation}) => {
             validationSchema={validationSchema}>
             {({handleChange, handleBlur, handleSubmit, values, errors}) => {
               return (
-                <View>
+                <View style={{flex: 1}}>
                   <TextInput
                     mode="outlined"
                     label="Email"
@@ -124,7 +134,6 @@ const Login = ({navigation}) => {
                   <HelperText type="error" visible={!!errors.email}>
                     {toTitleCase(errors.email)}
                   </HelperText>
-
                   <TextInput
                     mode="outlined"
                     label="Password"
@@ -147,8 +156,8 @@ const Login = ({navigation}) => {
                       <Text style={styles.label}>Forgot your password?</Text>
                     </TouchableOpacity>
                   </View>
-
                   <Button
+                    style={{marginHorizontal: 10}}
                     mode="contained"
                     onPress={handleSubmit}
                     loading={loading}
@@ -163,11 +172,26 @@ const Login = ({navigation}) => {
                     }}>
                     OR
                   </Text>
-                  <Button
-                    mode="outlined"
-                    onPress={() => navigation.navigate(RoutesName.SIGNUP)}>
-                    Sign Up
-                  </Button>
+                  <TouchableOpacity
+                    disabled={loading}
+                    onPress={_onGoogleLoginPress}
+                    style={styles.google}>
+                    {!loading ? (
+                      <>
+                        <GoogleLogo />
+                        <Text
+                          style={{
+                            fontSize: 16,
+                            fontWeight: '600',
+                            marginLeft: 20,
+                          }}>
+                          Continue with Google
+                        </Text>
+                      </>
+                    ) : (
+                      <ActivityIndicator size={30} />
+                    )}
+                  </TouchableOpacity>
                 </View>
               );
             }}
@@ -188,5 +212,16 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     marginTop: 4,
+  },
+  google: {
+    backgroundColor: '#f2f2f2',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 60,
+    elevation: 8,
+    marginBottom: 30,
+    marginHorizontal: 10,
   },
 });

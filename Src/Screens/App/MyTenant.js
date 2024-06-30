@@ -4,7 +4,11 @@ import {FAB, Text, useTheme} from 'react-native-paper';
 import Container from '../../Components/Container';
 import AddRoomModal from '../../Components/Modals/AddRoomModal';
 import VirtualizedScrollView from '../../Components/VirtualisedScroll';
-import {getRoomDetails, getUserRooms} from '../../Services/Collections';
+import {
+  getRoomDetails,
+  getUserRooms,
+  removeUserRoom,
+} from '../../Services/Collections';
 import {useTypedSelector} from '../../Store/MainStore';
 import {selectUserRooms} from '../../Store/Slices/AuthSlice';
 import RoutesName from '../../Utils/Resource/RoutesName';
@@ -14,8 +18,13 @@ import {Image} from 'react-native';
 import SVG from '../../Assets/SVG';
 import Loader from '../../Components/Loader';
 import {RefreshControl} from 'react-native';
+import LottieView from 'lottie-react-native';
+import EmptyComponent from '../../Components/EmptyComponent';
+import AppleStyleSwipeableRow from '../../Components/Swipable/AppleStyleSwipeableRow';
+import MyDialog from '../../Components/Modals/Dialog';
 
 const MyTenant = ({navigation}) => {
+  const [showDialog, setShowDialog] = useState(null);
   const [visible, setVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const rooms = useTypedSelector(selectUserRooms);
@@ -34,6 +43,18 @@ const MyTenant = ({navigation}) => {
     await getUserRooms();
     setRefreshing(false);
   }, []);
+
+  const deleteRoom = async room => {
+    try {
+      setLoading(true);
+      await removeUserRoom(room);
+      setShowDialog(null);
+      setLoading(false);
+    } catch (error) {
+      console.log('🚀 ~ deleteRoom ~ error:', error);
+    }
+  };
+
   return (
     <Container>
       <Header back={false} title="My Rooms" />
@@ -52,44 +73,57 @@ const MyTenant = ({navigation}) => {
           ItemSeparatorComponent={<View style={{height: 15}} />}
           renderItem={({item}) => {
             return (
-              <TouchableOpacity
-                onPress={() => onPress(item)}
-                style={styles.roomCard}>
-                <View
-                  style={{
-                    width: 80,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}>
-                  <SVG.ROOM />
-                </View>
-                <View style={{flex: 1}}>
+              <AppleStyleSwipeableRow
+                style={styles.roomCardMain}
+                onSwipe={() => setShowDialog(item)}>
+                <TouchableOpacity
+                  style={styles.roomCard}
+                  onPress={() => onPress(item)}>
                   <View
                     style={{
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
+                      width: 80,
                       alignItems: 'center',
-                      flex: 1,
-                      marginBottom: 5,
+                      justifyContent: 'center',
                     }}>
-                    <Text style={styles.roomName}>{item?.roomName}</Text>
-                    <Text style={styles.room}>No. {item?.roomNo}</Text>
+                    <SVG.ROOM />
                   </View>
-                  <Text style={styles.roomTenetName}>{item?.tenetName}</Text>
-                  <Text style={styles.roomStartDate}>
-                    {item?.startDate &&
-                      moment(item?.startDate, 'DD-MMMM-YYYY').format(
-                        'DD MMMM YYYY',
-                      )}
-                  </Text>
-                </View>
-              </TouchableOpacity>
+                  <View style={{flex: 1}}>
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flex: 1,
+                        marginBottom: 5,
+                      }}>
+                      <Text style={styles.roomName}>{item?.roomName}</Text>
+                      <Text style={styles.room}>No. {item?.roomNo}</Text>
+                    </View>
+                    <Text style={styles.roomTenetName}>{item?.tenetName}</Text>
+                    <Text style={styles.roomStartDate}>
+                      {item?.startDate &&
+                        moment(item?.startDate, 'DD-MMMM-YYYY').format(
+                          'DD MMMM YYYY',
+                        )}
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              </AppleStyleSwipeableRow>
             );
           }}
+          ListEmptyComponent={<EmptyComponent title="No Room Added Yet!" />}
         />
       </VirtualizedScrollView>
       <FAB icon="plus" style={styles.fab} onPress={() => setVisible(true)} />
       <AddRoomModal visible={visible} hideModal={() => setVisible(false)} />
+      <MyDialog
+        setVisible={() => setShowDialog(null)}
+        visible={showDialog}
+        title={'Delete Room'}
+        body={'Are you sure you want to delete the room?'}
+        donePress={() => deleteRoom(showDialog?.roomId)}
+        doneTitle="Delete"
+      />
     </Container>
   );
 };
@@ -108,10 +142,14 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 10,
     paddingVertical: 20,
-    borderRadius: 12,
-    elevation: 10,
     flexDirection: 'row',
     alignItems: 'center',
+  },
+  roomCardMain: {
+    backgroundColor: '#fff',
+    width: '100%',
+    borderRadius: 12,
+    elevation: 10,
   },
   roomName: {
     fontSize: 18,

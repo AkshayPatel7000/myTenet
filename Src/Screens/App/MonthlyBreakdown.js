@@ -35,6 +35,7 @@ import {RefreshControl} from 'react-native';
 import MyDialog from '../../Components/Modals/Dialog';
 import RoutesName from '../../Utils/Resource/RoutesName';
 import Loader from '../../Components/Loader';
+import EmptyComponent from '../../Components/EmptyComponent';
 
 const MonthlyBreakdown = ({navigation}) => {
   const selectedRoomTenets = useTypedSelector(selectSelectedTenant);
@@ -255,6 +256,9 @@ const MonthlyBreakdown = ({navigation}) => {
               </Pressable>
             );
           }}
+          ListEmptyComponent={
+            <EmptyComponent title="No Bill Record Added Yet!" />
+          }
         />
       </VirtualizedScrollView>
       {loading && <Loader />}

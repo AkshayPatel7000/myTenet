@@ -1,0 +1,89 @@
+name: react-native-android-build-apk
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  install-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+      - name: Install dependencies with Yarn
+        run: yarn install
+
+  build-android:
+    needs: install-and-test
+    runs-on: ubuntu-latest
+    steps: 
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: "temurin"
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+      - name: Install dependencies with Yarn
+        run: yarn install
+      - name: Build Android Release
+        run: |
+          cd android && chmod +x ./gradlew && ./gradlew assembleRelease
+          # Generate a unique file name based on timestamp
+          timestamp=$(date +"%d%m_%H%M")
+          apk_name="My_Rooms_$timestamp.apk"
+          # Define maximum retry attempts and delay (in seconds)
+          max_retries=3
+          retry_delay=5
+          retries=0
+          apk_found=false
+          echo "$apk_name"
+          ls -la app/build/outputs/apk/release/
+          
+          # Loop to wait and retry if APK file is not found
+          while [ $retries -lt $max_retries ]; do
+            if [ -f app/build/outputs/apk/release/app-release.apk ]; then
+              mv app/build/outputs/apk/release/app-release.apk app/build/outputs/apk/release/$apk_name
+              apk_found=true
+              break
+            else
+              retries=$((retries+1))
+              echo "APK file not found. Retrying in $retry_delay seconds... (Attempt $retries of $max_retries)"
+              sleep $retry_delay
+            fi
+          done
+          ls -la app/build/outputs/apk/release/
+          # If after retries APK is still not found, exit with an error
+          if ! $apk_found; then
+            echo "Error: APK file not found after $max_retries attempts."
+            exit 1
+          fi
+      - name: Find APK file
+        id: find-apk
+        run: |
+          ls -la android/app/build/outputs/apk/release/
+          apk_path=$(find android/app/build/outputs/apk/release/ -name "*.apk" -print -quit)
+          echo "::set-output name=apk_path::$apk_path"
+          
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v1
+        with:
+          name: My_Rooms-${{ github.run_number }}
+          path: ${{ steps.find-apk.outputs.apk_path }}
+          
+      - name: Download artifact
+        uses: actions/download-artifact@v2
+        with:
+          name: My_Rooms-${{ github.run_number }}
+
+      - name: Print artifact URL
+        run: |
+          echo "Artifact download URL: ${{ steps.download-artifact.outputs.download-url }}"
+

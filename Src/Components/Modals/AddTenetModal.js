@@ -12,14 +12,30 @@ import {
 } from 'react-native-paper';
 import {DatePickerInput} from 'react-native-paper-dates';
 import * as Yup from 'yup';
-import {addRoomTenet, updateUserRoom} from '../../Services/Collections';
+import {
+  addRoomTenet,
+  updateRoomTenet,
+  updateUserRoom,
+} from '../../Services/Collections';
+import moment from 'moment';
 
 const AddTenetModal = ({visible, hideModal, editData}) => {
   const [loading, setLoading] = useState(false);
+  const dateNew = () => {
+    return editData?.startDate
+      ? new Date(
+          `${
+            moment(editData?.startDate, 'DD-MMM-YYYY').format('YYYY-MM-DD') +
+            'T18:30:00.000Z'
+          }`,
+        )
+      : '';
+  };
+
   const initialValue = {
     name: editData?.name || '',
     phone: editData?.phone || '',
-    startDate: editData?.startDate || '',
+    startDate: dateNew(),
     aadharNo: editData?.aadharNo || '',
   };
 
@@ -36,6 +52,7 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
   });
 
   const _onAddPress = async values => {
+    console.log('🚀 ~ AddTenetModal ~ values:', values);
     try {
       setLoading(true);
       const response = await addRoomTenet(values, null);
@@ -51,7 +68,7 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
   const _onEditPress = async values => {
     try {
       setLoading(true);
-      const response = await updateUserRoom(values);
+      const response = await updateRoomTenet(values, editData);
       console.log('🚀 ~ _onEditPress ~ response:', response);
       setLoading(false);
 
@@ -63,7 +80,12 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
     }
   };
   const onSubmit = values => {
-    if (editData?.roomId) {
+    console.log(
+      '🚀 ~ onSubmit ~ editData?.currentTenantId:',
+      editData?.tenantId,
+    );
+    if (editData?.tenantId) {
+      // console.log("🚀 ~ onSubmit ~ editData?.currentTenantId:", editData?.currentTenantId)
       _onEditPress(values);
     } else {
       _onAddPress(values);
@@ -77,7 +99,7 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
         contentContainerStyle={styles.containerStyle}>
         <View style={styles.headerContainer}>
           <Text style={styles.heading}>
-            {editData?.roomId ? 'Edit Tenet' : 'Add new tenet'}
+            {editData?.tenantId ? 'Edit Tenet' : 'Add new tenet'}
           </Text>
           <IconButton icon="close" onPress={hideModal} size={20} />
         </View>
@@ -156,7 +178,7 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
                     onPress={handleSubmit}
                     loading={loading}
                     disabled={loading}>
-                    {editData?.roomId ? 'Save Tenet' : 'Add Tenet'}
+                    {editData?.tenantId ? 'Save Tenet' : 'Add Tenet'}
                   </Button>
                 </View>
               );
