@@ -1,6 +1,6 @@
-import {Formik} from 'formik';
+import {Formik, FieldArray} from 'formik';
 import React, {useState} from 'react';
-import {StyleSheet, View} from 'react-native';
+import {Pressable, ScrollView, StyleSheet, View} from 'react-native';
 import {
   Button,
   HelperText,
@@ -37,6 +37,7 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
     phone: editData?.phone || '',
     startDate: dateNew(),
     aadharNo: editData?.aadharNo || '',
+    otherMembers: editData?.otherMembers || [],
   };
 
   const validationSchema = Yup.object().shape({
@@ -91,6 +92,7 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
       _onAddPress(values);
     }
   };
+
   return (
     <Portal>
       <Modal
@@ -104,21 +106,21 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
           <IconButton icon="close" onPress={hideModal} size={20} />
         </View>
 
-        <View>
-          <Formik
-            initialValues={initialValue}
-            onSubmit={onSubmit}
-            validationSchema={validationSchema}>
-            {({
-              handleChange,
-              handleBlur,
-              handleSubmit,
-              values,
-              errors,
-              setFieldValue,
-            }) => {
-              return (
-                <View>
+        <Formik
+          initialValues={initialValue}
+          onSubmit={onSubmit}
+          validationSchema={validationSchema}>
+          {({
+            handleChange,
+            handleBlur,
+            handleSubmit,
+            values,
+            errors,
+            setFieldValue,
+          }) => {
+            return (
+              <>
+                <ScrollView style={{marginBottom: 20}}>
                   <View style={{marginTop: 10}}>
                     <DatePickerInput
                       hasError={!!errors.startDate}
@@ -127,10 +129,7 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
                       onChange={e => setFieldValue('startDate', e)}
                       inputMode="start"
                     />
-                    <HelperText
-                      type="error"
-                      visible={!!errors.startDate}
-                      style={{marginTop: 30}}>
+                    <HelperText type="error" visible={!!errors.startDate}>
                       {errors.startDate}
                     </HelperText>
                   </View>
@@ -173,18 +172,92 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
                   <HelperText type="error" visible={!!errors.aadharNo}>
                     {errors.aadharNo}
                   </HelperText>
-                  <Button
-                    mode="contained"
-                    onPress={handleSubmit}
-                    loading={loading}
-                    disabled={loading}>
-                    {editData?.tenantId ? 'Save Tenet' : 'Add Tenet'}
-                  </Button>
-                </View>
-              );
-            }}
-          </Formik>
-        </View>
+                  <FieldArray
+                    name="otherMembers"
+                    render={arrayHelpers => (
+                      <View>
+                        {values?.otherMembers.map((member, index) => (
+                          <>
+                            <View style={styles.memberHeading}>
+                              <Text>Member {index + 1}</Text>
+                              <IconButton
+                                icon="close"
+                                mode="contained"
+                                size={12}
+                                onPress={() => arrayHelpers.remove(index)}
+                              />
+                            </View>
+                            <TextInput
+                              label={'Member Name'}
+                              onChangeText={handleChange(
+                                `otherMembers[${index}].name`,
+                              )}
+                              onBlur={handleBlur('otherMembers[${index}].name')}
+                              value={member.name}
+                              autoCapitalize="none"
+                              style={styles.memberInput}
+                            />
+
+                            <TextInput
+                              label={'Member Phone'}
+                              onChangeText={handleChange(
+                                `otherMembers[${index}].phone`,
+                              )}
+                              onBlur={handleBlur(
+                                `otherMembers[${index}].phone`,
+                              )}
+                              autoCapitalize="none"
+                              keyboardType="phone-pad"
+                              style={styles.memberInput}
+                              value={member.phone}
+                            />
+
+                            <TextInput
+                              label={'Member Aadhar No.'}
+                              onChangeText={handleChange(
+                                `otherMembers[${index}].aadharNo`,
+                              )}
+                              onBlur={handleBlur(
+                                `otherMembers[${index}].aadharNo`,
+                              )}
+                              autoCapitalize="none"
+                              keyboardType="number-pad"
+                              style={styles.memberInput}
+                              value={member.aadharNo}
+                            />
+                          </>
+                        ))}
+                        <View
+                          style={{
+                            alignItems: 'flex-end',
+                            marginBottom: 20,
+                          }}>
+                          <Pressable
+                            onPress={() =>
+                              arrayHelpers.push({
+                                name: '',
+                                phone: '',
+                                aadharNo: '',
+                              })
+                            }>
+                            <Text variant="bodyLarge">Add Member</Text>
+                          </Pressable>
+                        </View>
+                      </View>
+                    )}
+                  />
+                </ScrollView>
+                <Button
+                  mode="contained"
+                  onPress={handleSubmit}
+                  loading={loading}
+                  disabled={loading}>
+                  {editData?.tenantId ? 'Save Tenet' : 'Add Tenet'}
+                </Button>
+              </>
+            );
+          }}
+        </Formik>
       </Modal>
     </Portal>
   );
@@ -210,5 +283,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 20,
     alignItems: 'center',
+  },
+  memberInput: {
+    marginBottom: 20,
+  },
+  memberHeading: {
+    marginBottom: 20,
+    flexDirection: 'row',
+
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
 });

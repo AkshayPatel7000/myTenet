@@ -35,12 +35,19 @@ const Profile = () => {
   });
   const Logout = async () => {
     // setVisible(true);
-    await auth().signOut();
-    await GoogleSignin.revokeAccess();
-    dispatch(setAuthToken(null));
-    dispatch(resetAuthSlice({}));
+    try {
+      await auth().signOut();
+      await GoogleSignin.revokeAccess();
+      dispatch(setAuthToken(null));
+      dispatch(resetAuthSlice({}));
 
-    LocalStorage.clearLocalStorage();
+      LocalStorage.clearLocalStorage();
+    } catch (error) {
+      dispatch(setAuthToken(null));
+      dispatch(resetAuthSlice({}));
+
+      LocalStorage.clearLocalStorage();
+    }
   };
   const _onPressSave = async values => {
     try {

@@ -1,6 +1,13 @@
 import {Formik} from 'formik';
 import React, {useState} from 'react';
-import {Alert, Image, PermissionsAndroid, StyleSheet, View} from 'react-native';
+import {
+  Alert,
+  Image,
+  PermissionsAndroid,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import {
   Button,
   HelperText,
@@ -135,7 +142,7 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
           <IconButton icon="close" onPress={hideModal} size={20} />
         </View>
 
-        <View>
+        <ScrollView>
           <Formik
             initialValues={initialValue}
             onSubmit={_onAddPress}
@@ -268,7 +275,7 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
               );
             }}
           </Formik>
-        </View>
+        </ScrollView>
       </Modal>
     </Portal>
   );
