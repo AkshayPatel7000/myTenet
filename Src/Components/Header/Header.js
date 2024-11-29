@@ -3,7 +3,13 @@ import React from 'react';
 import {IconButton, Text} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
 
-const Header = ({title = '', back = true, right, rightIconPress}) => {
+const Header = ({
+  title = '',
+  back = true,
+  right,
+  rightText = '',
+  rightIconPress,
+}) => {
   const navigation = useNavigation();
   return (
     <View style={styles.main}>
@@ -20,7 +26,10 @@ const Header = ({title = '', back = true, right, rightIconPress}) => {
           }}>
           <Text style={styles.title}>{title || ''}</Text>
           {right ? (
-            <IconButton icon={right} onPress={rightIconPress} />
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+              <IconButton icon={right} onPress={rightIconPress} />
+              {rightText && <Text style={styles.title}>{rightText}</Text>}
+            </View>
           ) : (
             <View />
           )}

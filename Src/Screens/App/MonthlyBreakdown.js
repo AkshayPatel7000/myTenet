@@ -65,8 +65,39 @@ const MonthlyBreakdown = ({navigation}) => {
     upi = '',
     roomRent = '',
     eleBill = '',
+    type = 'whatsapp',
   }) =>
-    `Hi ${selectedRoomTenets?.name}\n\n_Electricity bill of month_ *${date}*\n_Last month reading_ *${oldReading}*\n_Current month reading_ *${newReading}*\n_Total unit_ *${units}*\n_Total electricity bill_ *${eleBill}* \n_Room Rent_ *${roomRent}*\n_Total Amount_ *${amount}*\n\nPlease pay you bill on time on mobile no. *${phone}* or _${upi}_`;
+    type === 'whatsapp'
+      ? `Hi ${selectedRoomTenets?.name}
+
+_Electricity bill for the month of_ *${date}*
+
+------------------------------------------------
+| _Last month reading_   |*${oldReading}*|
+| _Current month reading_|      *${newReading}*|
+| _Total units_          |           *${units}*|
+| _Total electricity bill_|         *${eleBill}*|
+------------------------------------------------
+| _Room Rent_            |        *${roomRent}*|
+| _Total Amount_         |          *${amount}*|
+------------------------------------------------
+
+Please pay your bill on time to mobile number *${phone}* or UPI *${upi}*.`
+      : `Hi ${selectedRoomTenets?.name}
+
+Electricity bill for the month of ${date}
+
+------------------------------------------------
+| Last month reading   |${oldReading}|
+| Current month reading|      ${newReading}|
+| Total units          |           ${units}|
+| Total electricity bill|         ${eleBill}|
+------------------------------------------------
+| Room Rent            |        ${roomRent}|
+| Total Amount         |          ${amount}|
+------------------------------------------------
+
+Please pay your bill on time to mobile number ${phone} or UPI ${upi}.`;
   useEffect(() => {
     const init = async () => {
       setLoading(true);
@@ -90,7 +121,8 @@ const MonthlyBreakdown = ({navigation}) => {
     <Container>
       <Header
         title={selectedRoomTenets?.name}
-        right={!!markAsPaid?.recordId && 'basket-check-outline'}
+        right={!!markAsPaid?.recordId && 'check'}
+        rightText="Mark paid"
         rightIconPress={_onPressMarkAsPaid}
       />
       <VirtualizedScrollView
@@ -237,6 +269,7 @@ const MonthlyBreakdown = ({navigation}) => {
                             eleBill: item.totalAmount,
                             phone: user?.phone,
                             upi: user?.upi,
+                            type: 'sms',
                           }),
                           selectedRoomTenets?.phone,
                         );

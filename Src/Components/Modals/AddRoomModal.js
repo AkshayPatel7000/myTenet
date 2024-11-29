@@ -1,4 +1,4 @@
-import {StyleSheet, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
 import React, {useState} from 'react';
 import {
   Button,
@@ -81,7 +81,7 @@ const AddRoomModal = ({visible, hideModal, editData}) => {
           <IconButton icon="close" onPress={hideModal} size={20} />
         </View>
 
-        <View>
+        <ScrollView>
           <Formik
             initialValues={initialValue}
             onSubmit={onSubmit}
@@ -177,7 +177,7 @@ const AddRoomModal = ({visible, hideModal, editData}) => {
               );
             }}
           </Formik>
-        </View>
+        </ScrollView>
       </Modal>
     </Portal>
   );

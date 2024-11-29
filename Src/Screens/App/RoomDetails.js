@@ -31,7 +31,7 @@ const RoomDetails = ({navigation}) => {
   const selectedRoom = useTypedSelector(selectSelectedRoom);
   const selectedRoomTenets = useTypedSelector(selectRoomTenants);
   const [showDialog, setShowDialog] = useState(null);
-
+  const [showMore, setShowMore] = useState(false);
   const [visible, setVisible] = useState(false);
   const [visibleTenet, setVisibleTenet] = useState({open: false, edit: {}});
   const [loading, setLoading] = useState(false);
@@ -115,6 +115,22 @@ const RoomDetails = ({navigation}) => {
                   />
                 </View>
                 <View style={styles.roomDetailsCardItem}>
+                  <Text style={styles.cardDetailItemText}>Room rent </Text>
+                  <Text style={styles.cardDetailItemText}>
+                    ₹ {selectedRoom?.rent || '0'}
+                  </Text>
+                </View>
+                <View style={styles.roomDetailsCardItem}>
+                  <Text style={styles.cardDetailItemText}>Start date </Text>
+                  <Text style={styles.cardDetailItemText}>
+                    {currentTenet?.startDate
+                      ? moment(currentTenet?.startDate, 'DD-MMMM-YYYY').format(
+                          'DD MMMM YYYY',
+                        )
+                      : '-'}
+                  </Text>
+                </View>
+                <View style={styles.roomDetailsCardItem}>
                   <Text style={styles.cardDetailItemText}>Name </Text>
                   <Text style={styles.cardDetailItemText}>
                     {currentTenet?.name || '-'}
@@ -131,22 +147,66 @@ const RoomDetails = ({navigation}) => {
                     </Text>
                   </TouchableOpacity>
                 </View>
-                <View style={styles.roomDetailsCardItem}>
-                  <Text style={styles.cardDetailItemText}>Room rent </Text>
-                  <Text style={styles.cardDetailItemText}>
-                    ₹ {selectedRoom?.rent || '0'}
-                  </Text>
-                </View>
-                <View style={styles.roomDetailsCardItem}>
-                  <Text style={styles.cardDetailItemText}>Start date </Text>
-                  <Text style={styles.cardDetailItemText}>
-                    {currentTenet?.startDate
-                      ? moment(currentTenet?.startDate, 'DD-MMMM-YYYY').format(
-                          'DD MMMM YYYY',
-                        )
-                      : '-'}
-                  </Text>
-                </View>
+                {showMore && (
+                  <View style={styles.roomDetailsCardItem}>
+                    <Text style={styles.cardDetailItemText}>Aadhar No.</Text>
+                    <View>
+                      <Text style={styles.cardDetailItemText}>
+                        {currentTenet.aadharNo}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+                {showMore &&
+                  currentTenet?.otherMembers?.map((member, index) => {
+                    return (
+                      <>
+                        <Text style={styles.cardDetailItemMemberText}>
+                          Member {index + 1}
+                        </Text>
+                        <View style={styles.roomDetailsCardItem}>
+                          <Text style={styles.cardDetailItemText}>Name</Text>
+                          <View>
+                            <Text style={styles.cardDetailItemText}>
+                              {member.name}
+                            </Text>
+                          </View>
+                        </View>
+                        <View style={styles.roomDetailsCardItem}>
+                          <Text style={styles.cardDetailItemText}>Phone</Text>
+                          <TouchableOpacity
+                            onPress={() =>
+                              currentTenet?.phone &&
+                              onOpenDialer(currentTenet?.phone)
+                            }>
+                            <Text style={styles.cardDetailItemText}>
+                              {member.phone}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                        <View style={styles.roomDetailsCardItem}>
+                          <Text style={styles.cardDetailItemText}>
+                            Aadhar No.
+                          </Text>
+                          <View>
+                            <Text style={styles.cardDetailItemText}>
+                              {member.aadharNo}
+                            </Text>
+                          </View>
+                        </View>
+                      </>
+                    );
+                  })}
+                {currentTenet?.otherMembers?.length > 0 && (
+                  <View style={styles.roomDetailsCardItem}>
+                    <Text style={styles.cardDetailItemText}> </Text>
+                    <TouchableOpacity onPress={() => setShowMore(pre => !pre)}>
+                      <Text style={styles.cardDetailItemText}>
+                        View {showMore ? 'Less' : 'More'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </LinearGradient>
             )}
 
@@ -279,5 +339,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textTransform: 'capitalize',
     fontWeight: '600',
+  },
+  cardDetailItemMemberText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 16,
+    marginTop: 10,
   },
 });
