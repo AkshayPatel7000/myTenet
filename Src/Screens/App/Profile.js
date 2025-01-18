@@ -88,7 +88,8 @@ const Profile = () => {
             phone: user?.phone || '',
             upi: user?.upi || '',
           }}
-          validationSchema={validationSchema}>
+          validationSchema={validationSchema}
+          enableReinitialize>
           {({handleChange, handleBlur, values, errors, handleSubmit}) => {
             return (
               <View>

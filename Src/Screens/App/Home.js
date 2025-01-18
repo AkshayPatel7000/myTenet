@@ -54,13 +54,26 @@ const Home = props => {
 
     return sumArrayOfObjects(paidAmount, 'value');
   }, [homeData]);
+  const totalElectcityRentTillToday = useMemo(() => {
+    let paidAmount = [];
+    homeData.map(room => {
+      room?.tenet?.records?.map(e => {
+        if (e.paidStatus) {
+          paidAmount.push({value: e?.totalAmount || 0});
+        }
+      });
+    });
+
+    return sumArrayOfObjects(paidAmount, 'value');
+  }, [homeData]);
+
   return (
     <Container>
       <Header back={false} title="Home" />
       {loading && <Loader />}
       {!loading && (
         <VirtualizedScrollView
-          contentContainerStyle={{padding: 20}}
+          contentContainerStyle={{padding: 20, paddingBottom: 100}}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -91,7 +104,9 @@ const Home = props => {
           <View style={styles.rowContainer}>
             <Surface style={styles.card}>
               <IconButton icon="lightning-bolt" size={50} iconColor="#FFF" />
-              <Text style={styles.title}>Total Electricity Bill</Text>
+              <Text style={styles.title}>
+                {moment().format('MMM')} Electricity Bill
+              </Text>
               <Text style={styles.title}>₹ {totalElectcityRent}</Text>
             </Surface>
             <Surface style={styles.card}>
@@ -102,28 +117,13 @@ const Home = props => {
               </Text>
             </Surface>
           </View>
-
-          {/* <FlatList
-            data={homeData}
-            renderItem={({item}) => {
-              console.log('🚀 ~ Home ~ room:', item);
-              return (
-                <View style={{flexDirection: 'row'}}>
-                  <View style={{width: '30%'}}>
-                    <Text>{item?.tenetName}</Text>
-                  </View>
-                  <View style={{width: '30%'}}>
-                    <Text>{item?.tenet?.lastPaidAmount}</Text>
-                  </View>
-                  <View style={{width: '30%'}}>
-                    <Text>
-                      {moment(item?.tenet?.lastPaidDate).format('MMM YYYY')}
-                    </Text>
-                  </View>
-                </View>
-              );
-            }}
-          /> */}
+          <View style={styles.rowContainer}>
+            <Surface style={styles.card}>
+              <IconButton icon="account-cash" size={50} iconColor="#FFF" />
+              <Text style={styles.title}>Total Electricity Bill</Text>
+              <Text style={styles.title}>₹ {totalElectcityRentTillToday}</Text>
+            </Surface>
+          </View>
         </VirtualizedScrollView>
       )}
     </Container>

@@ -60,7 +60,7 @@ const MyTenant = ({navigation}) => {
       <Header back={false} title="My Rooms" />
       {loading && <Loader />}
       <VirtualizedScrollView
-        contentContainerStyle={{padding: 20}}
+        contentContainerStyle={{padding: 20, paddingBottom: 100}}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
