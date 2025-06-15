@@ -20,13 +20,13 @@ jobs:
   build-android:
     needs: install-and-test
     runs-on: ubuntu-latest
-    steps: 
+    steps:
       - uses: actions/checkout@v3
       - name: Set up JDK 17
         uses: actions/setup-java@v2
         with:
           java-version: '17'
-          distribution: "temurin"
+          distribution: 'temurin'
       - name: Set up Node.js 20
         uses: actions/setup-node@v2
         with:
@@ -46,7 +46,7 @@ jobs:
           apk_found=false
           echo "$apk_name"
           ls -la app/build/outputs/apk/release/
-          
+
           # Loop to wait and retry if APK file is not found
           while [ $retries -lt $max_retries ]; do
             if [ -f app/build/outputs/apk/release/app-release.apk ]; then
@@ -70,20 +70,22 @@ jobs:
         run: |
           ls -la android/app/build/outputs/apk/release/
           apk_path=$(find android/app/build/outputs/apk/release/ -name "*.apk" -print -quit)
-          echo "::set-output name=apk_path::$apk_path"
-          
+          echo "apk_path=$apk_path" >> $GITHUB_OUTPUT
+
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v1
+        uses: actions/upload-artifact@v4
         with:
           name: My_Rooms-${{ github.run_number }}
           path: ${{ steps.find-apk.outputs.apk_path }}
-          
+          retention-days: 5
+
       - name: Download artifact
-        uses: actions/download-artifact@v2
+        uses: actions/download-artifact@v4
         with:
           name: My_Rooms-${{ github.run_number }}
+          path: ./artifacts
 
-      - name: Print artifact URL
+      - name: List downloaded artifacts
         run: |
-          echo "Artifact download URL: ${{ steps.download-artifact.outputs.download-url }}"
-
+          echo "Downloaded artifacts:"
+          ls -la ./artifacts
