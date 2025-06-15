@@ -1,7 +1,20 @@
-import {Image, Pressable, StyleSheet, View} from 'react-native';
-import React, {useEffect, useState} from 'react';
+import moment from 'moment';
+import React, {useEffect, useState, useCallback, useMemo} from 'react';
+import {FlatList, Image, Pressable, RefreshControl, View} from 'react-native';
+import {FAB, Icon, IconButton, Text, useTheme} from 'react-native-paper';
 import Container from '../../Components/Container';
+import EmptyComponent from '../../Components/EmptyComponent';
 import Header from '../../Components/Header/Header';
+import Loader from '../../Components/Loader';
+import AddTenetRecordModal from '../../Components/Modals/AddTenetRecordModal';
+import MyDialog from '../../Components/Modals/Dialog';
+import PartialPaymentModal from '../../Components/Modals/PartialPaymentModal';
+import VirtualizedScrollView from '../../Components/VirtualisedScroll';
+import {
+  getUserRoomsTenantsRecord,
+  markAsPaidRecord,
+  updatePartialPayment,
+} from '../../Services/Collections';
 import {useTypedSelector} from '../../Store/MainStore';
 import {
   selectRoomTenantRecords,
@@ -9,95 +22,349 @@ import {
   selectSelectedTenant,
   selectUserProfile,
 } from '../../Store/Slices/AuthSlice';
-import VirtualizedScrollView from '../../Components/VirtualisedScroll';
-import {FlatList} from 'react-native';
-import {TouchableOpacity} from 'react-native';
-import {
-  Badge,
-  FAB,
-  IconButton,
-  useTheme,
-  Text,
-  Button,
-} from 'react-native-paper';
-import AddTenetRecordModal from '../../Components/Modals/AddTenetRecordModal';
-import {
-  getUserRoomsTenantsRecord,
-  markAsPaidRecord,
-} from '../../Services/Collections';
-import moment from 'moment';
 import {
   onOpenDialer,
   onSendSMSMessage,
   sendWhatsAppMessage,
 } from '../../Utils/helperFunction';
-import {RefreshControl} from 'react-native';
-import MyDialog from '../../Components/Modals/Dialog';
 import RoutesName from '../../Utils/Resource/RoutesName';
-import Loader from '../../Components/Loader';
-import EmptyComponent from '../../Components/EmptyComponent';
+import {getStyles} from '../../Utils/Styles/monthlyBreakdownStyles';
 
 const MonthlyBreakdown = ({navigation}) => {
   const selectedRoomTenets = useTypedSelector(selectSelectedTenant);
   const user = useTypedSelector(selectUserProfile);
-  console.log('🚀 ~ MonthlyBreakdown ~ user:', user);
   const [userDialog, setUserDialog] = useState(false);
   const selectedRoom = useTypedSelector(selectSelectedRoom);
   const selectedRoomTenetRecords = useTypedSelector(selectRoomTenantRecords);
   const {colors} = useTheme();
   const styles = getStyles(colors);
   const [visible, setVisible] = useState(false);
-  const [markAsPaid, setMarkAsPaid] = useState({});
-  const [refreshing, setRefreshing] = React.useState(false);
+  const [partialPaymentVisible, setPartialPaymentVisible] = useState(false);
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(false);
-  const onRefresh = React.useCallback(async () => {
+
+  const totalPendingAmount = useMemo(() => {
+    return selectedRoomTenetRecords.reduce((total, record) => {
+      if (!record.paidStatus) {
+        return (
+          total +
+          (record.pendingAmount ||
+            Number(record.totalAmount) + Number(selectedRoom?.rent))
+        );
+      }
+      return total + (record.pendingAmount || 0);
+    }, 0);
+  }, [selectedRoomTenetRecords, selectedRoom]);
+
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await getUserRoomsTenantsRecord();
     setRefreshing(false);
   }, []);
-  const whatsAppMessage = ({
-    date = '0',
-    oldReading = '0',
-    newReading = '0',
-    units = '0',
-    amount = '0',
-    phone = '',
-    upi = '',
-    roomRent = '',
-    eleBill = '',
-    type = 'whatsapp',
-  }) =>
-    type === 'whatsapp'
-      ? `Hi ${selectedRoomTenets?.name}
 
-_Electricity bill for the month of_ *${date}*
+  const getWhatsAppMessage = useCallback(
+    ({
+      date = '0',
+      oldReading = '0',
+      newReading = '0',
+      units = '0',
+      amount = '0',
+      phone = '',
+      upi = '',
+      roomRent = '',
+      eleBill = '',
+      type = 'whatsapp',
+      pendingAmount = '0',
+    }) => {
+      const message = `Hi ${selectedRoomTenets?.name}
 
-------------------------------------------------
-| _Last month reading_   |*${oldReading}*|
-| _Current month reading_|      *${newReading}*|
-| _Total units_          |           *${units}*|
-| _Total electricity bill_|         *${eleBill}*|
-------------------------------------------------
-| _Room Rent_            |        *${roomRent}*|
-| _Total Amount_         |          *${amount}*|
-------------------------------------------------
-
-Please pay your bill on time to mobile number *${phone}* or UPI *${upi}*.`
-      : `Hi ${selectedRoomTenets?.name}
-
-Electricity bill for the month of ${date}
+${
+  type === 'whatsapp'
+    ? '_Electricity bill for the month of_ *'
+    : 'Electricity bill for the month of '
+}${date}*
 
 ------------------------------------------------
-| Last month reading   |${oldReading}|
-| Current month reading|      ${newReading}|
-| Total units          |           ${units}|
-| Total electricity bill|         ${eleBill}|
+| ${
+        type === 'whatsapp'
+          ? '_Last month reading_   |*'
+          : 'Last month reading   |'
+      }${oldReading}${type === 'whatsapp' ? '*|' : '|'}
+| ${
+        type === 'whatsapp'
+          ? '_Current month reading_|      *'
+          : 'Current month reading|      '
+      }${newReading}${type === 'whatsapp' ? '*|' : '|'}
+| ${
+        type === 'whatsapp'
+          ? '_Total units_          |           *'
+          : 'Total units          |           '
+      }${units}${type === 'whatsapp' ? '*|' : '|'}
+| ${
+        type === 'whatsapp'
+          ? '_Total electricity bill_|         *'
+          : 'Total electricity bill|         '
+      }${eleBill}${type === 'whatsapp' ? '*|' : '|'}
 ------------------------------------------------
-| Room Rent            |        ${roomRent}|
-| Total Amount         |          ${amount}|
+| ${
+        type === 'whatsapp'
+          ? '_Room Rent_            |        *'
+          : 'Room Rent            |        '
+      }${roomRent}${type === 'whatsapp' ? '*|' : '|'}
+| ${
+        type === 'whatsapp'
+          ? '_Total Amount_         |          *'
+          : 'Total Amount         |          '
+      }${amount}${type === 'whatsapp' ? '*|' : '|'}
+${
+  pendingAmount > 0
+    ? `| ${
+        type === 'whatsapp'
+          ? '_Pending Amount_         |          *'
+          : 'Pending Amount         |          '
+      }${pendingAmount}${type === 'whatsapp' ? '*|' : '|'}`
+    : ''
+}
 ------------------------------------------------
 
-Please pay your bill on time to mobile number ${phone} or UPI ${upi}.`;
+Please pay your bill on time to mobile number ${
+        type === 'whatsapp' ? '*' : ''
+      }${phone}${type === 'whatsapp' ? '* or UPI *' : ' or UPI '}${upi}${
+        type === 'whatsapp' ? '*.' : '.'
+      }`;
+
+      return message;
+    },
+    [selectedRoomTenets?.name],
+  );
+
+  const handleMarkAsPaid = useCallback(
+    async record => {
+      try {
+        setLoading(true);
+        await markAsPaidRecord({
+          recordId: record.recordId,
+          createdAt: record.createdAt,
+          totalAmount: Number(record?.totalAmount) + Number(selectedRoom?.rent),
+        });
+        setLoading(false);
+      } catch (error) {
+        console.log('🚀 ~ MonthlyBreakdown ~ error:', error);
+      }
+    },
+    [selectedRoom?.rent],
+  );
+
+  const handlePartialPayment = useCallback(
+    async ({recordId, paidAmount, pendingAmount}) => {
+      try {
+        setLoading(true);
+        await updatePartialPayment({
+          recordId,
+          paidAmount,
+          pendingAmount,
+          record: selectedRecord,
+        });
+        setLoading(false);
+      } catch (error) {
+        console.log('🚀 ~ MonthlyBreakdown ~ error:', error);
+      }
+    },
+    [selectedRecord],
+  );
+
+  const handleWhatsAppReminder = useCallback(
+    item => {
+      if (!user?.phone || !user?.upi) {
+        setUserDialog(true);
+        return;
+      }
+      sendWhatsAppMessage(
+        getWhatsAppMessage({
+          date: `${moment(item?.createdAt)
+            .subtract(1, 'month')
+            .format('MMMM')}-${moment(item?.createdAt).format('MMMM YYYY')}`,
+          newReading: item?.currentReading,
+          oldReading: item?.previousReading,
+          amount: Number(item?.totalAmount) + Number(selectedRoom?.rent),
+          units: item?.totalUnitBurned,
+          roomRent: selectedRoom?.rent,
+          eleBill: item.totalAmount,
+          phone: user?.phone,
+          upi: user?.upi,
+          pendingAmount: item.pendingAmount || 0,
+        }),
+        selectedRoomTenets?.phone,
+      );
+    },
+    [user, selectedRoom, selectedRoomTenets, getWhatsAppMessage],
+  );
+
+  const handleSMSReminder = useCallback(
+    item => {
+      if (!user?.phone || !user?.upi) {
+        setUserDialog(true);
+        return;
+      }
+      onSendSMSMessage(
+        getWhatsAppMessage({
+          date: `${moment(item?.createdAt)
+            .subtract(1, 'month')
+            .format('MMMM')}-${moment(item?.createdAt).format('MMMM YYYY')}`,
+          newReading: item?.currentReading,
+          oldReading: item?.previousReading,
+          amount: Number(item?.totalAmount) + Number(selectedRoom?.rent),
+          units: item?.totalUnitBurned,
+          roomRent: selectedRoom?.rent,
+          eleBill: item.totalAmount,
+          phone: user?.phone,
+          upi: user?.upi,
+          type: 'sms',
+          pendingAmount: item.pendingAmount || 0,
+        }),
+        selectedRoomTenets?.phone,
+      );
+    },
+    [user, selectedRoom, selectedRoomTenets, getWhatsAppMessage],
+  );
+
+  const renderItem = useCallback(
+    ({item}) => (
+      <Pressable
+        style={[
+          styles.roomCard,
+          {
+            borderWidth: item.paidStatus ? 0 : 2,
+            borderColor: item.paidStatus ? '#fff' : colors.error,
+          },
+        ]}>
+        <View style={styles.imageContainer}>
+          <Image source={{uri: item?.image}} style={styles.image} />
+          {!item?.paidStatus && (
+            <View style={styles.paymentButtonsContainer}>
+              <IconButton
+                icon={'check'}
+                mode="contained"
+                onPress={() => handleMarkAsPaid(item)}>
+                <Icon name="check" size={20} color="#fff" />
+              </IconButton>
+              <IconButton
+                onPress={() => {
+                  setSelectedRecord(item);
+                  setPartialPaymentVisible(true);
+                }}
+                mode="contained"
+                icon={'cash'}>
+                Partial Pay
+              </IconButton>
+            </View>
+          )}
+          <View
+            style={[
+              styles.statusContainer,
+              {
+                backgroundColor: item.paidStatus
+                  ? colors.primary
+                  : colors.error,
+              },
+            ]}>
+            <Text style={styles.statusText}>
+              {item.paidStatus
+                ? 'Paid'
+                : item.pendingAmount > 0
+                ? 'Partial Paid'
+                : 'Unpaid'}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.detailContainer}>
+          <Text style={styles.monthText}>
+            {moment(item.createdAt).format('MMMM YYYY')}
+          </Text>
+          <View style={styles.textInfoContainer}>
+            <Text style={styles.title}>Current Reading</Text>
+            <Text>{Number(item.currentReading)}</Text>
+          </View>
+          <View style={styles.textInfoContainer}>
+            <Text style={styles.title}>Previous Reading</Text>
+            <Text>{Number(item?.previousReading)}</Text>
+          </View>
+          <View style={styles.textInfoContainer}>
+            <Text style={styles.title}>Total Unit Burned</Text>
+            <Text>{Number(item?.totalUnitBurned)}</Text>
+          </View>
+          <View style={styles.textInfoContainer}>
+            <Text style={styles.title}>Amount per Unit</Text>
+            <Text>₹ {Number(item?.perUnit)}</Text>
+          </View>
+          <View style={styles.textInfoContainerTotal}>
+            <Text style={styles.totalBillTitle}>Total Electricity bill</Text>
+            <Text style={styles.totalBillAmount}>₹ {item.totalAmount}</Text>
+          </View>
+          <View style={styles.textInfoContainerTotal}>
+            <Text style={styles.totalBillTitle}>Total Amount</Text>
+            <Text style={styles.totalBillAmount}>
+              ₹ {Number(item?.totalAmount) + Number(selectedRoom?.rent)}
+            </Text>
+          </View>
+          {item.pendingAmount > 0 && (
+            <View style={styles.textInfoContainerTotal}>
+              <Text style={styles.totalBillTitle}>Pending Amount</Text>
+              <Text style={[styles.totalBillAmount, {color: colors.error}]}>
+                ₹ {item.pendingAmount}
+              </Text>
+            </View>
+          )}
+        </View>
+        {!item?.paidStatus && (
+          <View style={styles.actionButtonsContainer}>
+            <IconButton
+              icon={'whatsapp'}
+              mode="contained"
+              onPress={() => handleWhatsAppReminder(item)}>
+              Send Reminder
+            </IconButton>
+            <IconButton
+              icon={'message-processing'}
+              mode="contained"
+              onPress={() => handleSMSReminder(item)}>
+              Send Reminder
+            </IconButton>
+            <IconButton
+              icon={'phone'}
+              mode="contained"
+              onPress={() => onOpenDialer(selectedRoomTenets?.phone)}>
+              Send Reminder
+            </IconButton>
+          </View>
+        )}
+      </Pressable>
+    ),
+    [
+      selectedRoom,
+      colors,
+      handleWhatsAppReminder,
+      handleSMSReminder,
+      selectedRoomTenets,
+      handleMarkAsPaid,
+      styles.detailContainer,
+      styles.image,
+      styles.imageContainer,
+      styles.monthText,
+      styles.roomCard,
+      styles.statusContainer,
+      styles.statusText,
+      styles.textInfoContainer,
+      styles.textInfoContainerTotal,
+      styles.title,
+      styles.totalBillAmount,
+      styles.totalBillTitle,
+      styles.paymentButtonsContainer,
+      styles.actionButtonsContainer,
+    ],
+  );
+
   useEffect(() => {
     const init = async () => {
       setLoading(true);
@@ -106,27 +373,12 @@ Please pay your bill on time to mobile number ${phone} or UPI ${upi}.`;
     };
     init();
   }, []);
-  const _onPressMarkAsPaid = async () => {
-    try {
-      setLoading(true);
 
-      await markAsPaidRecord(markAsPaid);
-      setMarkAsPaid({});
-      setLoading(false);
-    } catch (error) {
-      console.log('🚀 ~ MonthlyBreakdown ~ error:', error);
-    }
-  };
   return (
     <Container>
-      <Header
-        title={selectedRoomTenets?.name}
-        right={!!markAsPaid?.recordId && 'check'}
-        rightText="Mark paid"
-        rightIconPress={_onPressMarkAsPaid}
-      />
+      <Header title={selectedRoomTenets?.name} />
       <VirtualizedScrollView
-        contentContainerStyle={{padding: 20, paddingBottom: 100}}
+        contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -134,161 +386,17 @@ Please pay your bill on time to mobile number ${phone} or UPI ${upi}.`;
             colors={[colors.primary]}
           />
         }>
+        {totalPendingAmount > 0 && (
+          <View style={styles.pendingSummaryContainer}>
+            <Text style={styles.pendingSummaryText}>
+              Total Pending Amount: ₹{totalPendingAmount}
+            </Text>
+          </View>
+        )}
         <FlatList
           data={selectedRoomTenetRecords}
-          ItemSeparatorComponent={<View style={{height: 15}} />}
-          renderItem={({item, i}) => {
-            return (
-              <Pressable
-                onLongPress={() => {
-                  if (!item.paidStatus) {
-                    setMarkAsPaid(item);
-                  }
-                }}
-                style={[
-                  styles.roomCard,
-                  {
-                    borderWidth: item.paidStatus ? 0 : 2,
-                    borderColor: item.paidStatus ? '#fff' : colors.error,
-                  },
-                ]}>
-                <View style={{height: 200}}>
-                  <Image
-                    source={{uri: item?.image}}
-                    style={{
-                      flex: 1,
-                      borderTopRightRadius: 8,
-                      borderTopLeftRadius: 8,
-                    }}
-                  />
-                </View>
-                <View style={styles.detailContainer}>
-                  <Text style={styles.monthText}>
-                    {moment(item.createdAt).format('MMMM YYYY')}
-                  </Text>
-                  <View style={styles.textInfoContainer}>
-                    <Text style={styles.title}>Current Reading</Text>
-                    <Text>{Number(item.currentReading)}</Text>
-                  </View>
-                  <View style={styles.textInfoContainer}>
-                    <Text style={styles.title}>Previous Reading</Text>
-                    <Text>{Number(item?.previousReading)}</Text>
-                  </View>
-                  <View style={styles.textInfoContainer}>
-                    <Text style={styles.title}>Total Unit Burned</Text>
-                    <Text>{Number(item?.totalUnitBurned)}</Text>
-                  </View>
-                  <View style={styles.textInfoContainer}>
-                    <Text style={styles.title}>Amount per Unit</Text>
-                    <Text>₹ {Number(item?.perUnit)}</Text>
-                  </View>
-                  <View style={styles.textInfoContainerTotal}>
-                    <Text style={styles.totalBillTitle}>
-                      Total Electricity bill
-                    </Text>
-                    <Text style={styles.totalBillAmount}>
-                      ₹ {item.totalAmount}
-                    </Text>
-                  </View>
-                </View>
-                {markAsPaid?.recordId === item?.recordId && (
-                  <IconButton
-                    onPress={() => setMarkAsPaid({})}
-                    icon={'check'}
-                    style={{position: 'absolute'}}
-                    mode="contained-tonal"
-                  />
-                )}
-                <View
-                  style={{
-                    position: 'absolute',
-                    right: 10,
-                    top: 10,
-                    backgroundColor: item.paidStatus
-                      ? colors.primary
-                      : colors.error,
-                    borderRadius: 50,
-                  }}>
-                  <Text
-                    style={{
-                      paddingHorizontal: 10,
-                      paddingVertical: 5,
-                      color: '#fff',
-                      fontWeight: '500',
-                    }}>
-                    {item.paidStatus ? 'Paid' : 'Unpaid'}
-                  </Text>
-                </View>
-                {!item?.paidStatus && (
-                  <View style={{flexDirection: 'row'}}>
-                    <IconButton
-                      icon={'whatsapp'}
-                      mode="contained"
-                      onPress={() => {
-                        if (!user?.phone || !user?.upi) {
-                          setUserDialog(true);
-                          return;
-                        }
-                        sendWhatsAppMessage(
-                          whatsAppMessage({
-                            date: moment(item?.createdAt).format('MMMM YYYY'),
-                            newReading: item?.currentReading,
-                            oldReading: item?.previousReading,
-                            amount:
-                              Number(item?.totalAmount) +
-                              Number(selectedRoom?.rent),
-                            units: item?.totalUnitBurned,
-                            roomRent: selectedRoom?.rent,
-                            eleBill: item.totalAmount,
-                            phone: user?.phone,
-                            upi: user?.upi,
-                          }),
-                          selectedRoomTenets?.phone,
-                        );
-                      }}>
-                      Send Reminder
-                    </IconButton>
-                    <IconButton
-                      icon={'message-processing'}
-                      mode="contained"
-                      onPress={() => {
-                        if (!user?.phone || !user?.upi) {
-                          setUserDialog(true);
-                          return;
-                        }
-                        onSendSMSMessage(
-                          whatsAppMessage({
-                            date: moment(item?.createdAt).format('MMMM YYYY'),
-                            newReading: item?.currentReading,
-                            oldReading: item?.previousReading,
-                            amount:
-                              Number(item?.totalAmount) +
-                              Number(selectedRoom?.rent),
-                            units: item?.totalUnitBurned,
-                            roomRent: selectedRoom?.rent,
-                            eleBill: item.totalAmount,
-                            phone: user?.phone,
-                            upi: user?.upi,
-                            type: 'sms',
-                          }),
-                          selectedRoomTenets?.phone,
-                        );
-                      }}>
-                      Send Reminder
-                    </IconButton>
-                    <IconButton
-                      icon={'phone'}
-                      mode="contained"
-                      onPress={() => {
-                        onOpenDialer(selectedRoomTenets?.phone);
-                      }}>
-                      Send Reminder
-                    </IconButton>
-                  </View>
-                )}
-              </Pressable>
-            );
-          }}
+          ItemSeparatorComponent={<View style={styles.separator} />}
+          renderItem={renderItem}
           ListEmptyComponent={
             <EmptyComponent title="No Bill Record Added Yet!" />
           }
@@ -299,6 +407,20 @@ Please pay your bill on time to mobile number ${phone} or UPI ${upi}.`;
       <AddTenetRecordModal
         visible={visible}
         hideModal={() => setVisible(false)}
+      />
+      <PartialPaymentModal
+        visible={partialPaymentVisible}
+        hideModal={() => {
+          setPartialPaymentVisible(false);
+          setSelectedRecord(null);
+        }}
+        onSave={handlePartialPayment}
+        totalAmount={
+          selectedRecord
+            ? Number(selectedRecord?.totalAmount) + Number(selectedRoom?.rent)
+            : 0
+        }
+        recordId={selectedRecord?.recordId}
       />
       <MyDialog
         title={'Update Your Details'}
@@ -313,55 +435,3 @@ Please pay your bill on time to mobile number ${phone} or UPI ${upi}.`;
 };
 
 export default MonthlyBreakdown;
-const getStyles = colors => {
-  return StyleSheet.create({
-    fab: {
-      position: 'absolute',
-      margin: 16,
-      right: 0,
-      bottom: 50,
-    },
-    roomCard: {
-      backgroundColor: '#fff',
-      width: '100%',
-      padding: 10,
-      borderRadius: 12,
-      elevation: 10,
-    },
-    monthText: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: colors.primary,
-    },
-    detailContainer: {
-      paddingVertical: 10,
-      paddingHorizontal: 5,
-    },
-    textInfoContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginVertical: 5,
-    },
-    title: {
-      fontSize: 14,
-      fontWeight: '500',
-    },
-    totalBillTitle: {
-      fontSize: 16,
-      fontWeight: '500',
-    },
-    textInfoContainerTotal: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginVertical: 5,
-      borderTopColor: colors.primary,
-      paddingTop: 10,
-      borderTopWidth: 1,
-    },
-    totalBillAmount: {
-      fontSize: 16,
-      fontWeight: '500',
-      color: colors.primary,
-    },
-  });
-};

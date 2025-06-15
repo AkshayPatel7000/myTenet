@@ -379,6 +379,8 @@ const markAsPaidRecord = async record => {
       .collection('record')
       .doc(record.recordId)
       .update({
+        paidAmount: record.totalAmount,
+        pendingAmount: 0,
         paidStatus: true,
       });
     await updateRoomTenet(
@@ -478,6 +480,44 @@ const getData = async () => {
       });
   } catch (error) {
     console.log('🚀 ~ getData ~ error:', error);
+  }
+};
+export const updatePartialPayment = async ({
+  paidAmount,
+  pendingAmount,
+  record,
+}) => {
+  try {
+    const userId = store?.getState()?.AuthSlice?.userProfile?.uid;
+    const roomId = store?.getState()?.AuthSlice?.selectedRoom.roomId;
+    const tenantId = store?.getState()?.AuthSlice?.selectedTenant?.tenantId;
+    const data = await firestore()
+      .collection('users')
+      .doc(userId)
+      .collection('rooms')
+      .doc(roomId)
+      .collection('Tenants')
+      .doc(tenantId)
+      .collection('record')
+      .doc(record.recordId)
+      .update({
+        paidAmount,
+        pendingAmount,
+        partialPaid: true,
+        updatedAt: firestore.FieldValue.serverTimestamp(),
+      });
+    await updateRoomTenet(
+      {
+        lastPaidDate: record.createdAt,
+        lastPaidAmount: record.totalAmount,
+      },
+      {tenantId},
+    );
+    await getUserRoomsTenantsRecord();
+    showSuccess('Record Added Successfully');
+  } catch (error) {
+    console.log('🚀 ~ getUserRoomsTenantsRecord ~ error:', error);
+    showError('Tenants Rooms Not Found');
   }
 };
 export {
