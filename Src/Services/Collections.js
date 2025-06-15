@@ -381,10 +381,13 @@ const markAsPaidRecord = async record => {
       .update({
         paidStatus: true,
       });
-    await updateRoomTenet({
-      lastPaidDate: record.createdAt,
-      lastPaidAmount: record.totalAmount,
-    });
+    await updateRoomTenet(
+      {
+        lastPaidDate: record.createdAt,
+        lastPaidAmount: record.totalAmount,
+      },
+      {tenantId},
+    );
     await getUserRoomsTenantsRecord();
     showSuccess('Record Added Successfully');
   } catch (error) {
