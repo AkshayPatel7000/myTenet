@@ -77,8 +77,14 @@ const MonthlyBreakdown = ({navigation}) => {
       type = 'whatsapp',
       pendingAmount = '0',
     }) => {
+      const previousPendingAmount =
+        Number(totalPendingAmount || 0) - Number(amount || 0);
+      console.log(
+        '🚀 ~ MonthlyBreakdown ~ previousPendingAmount:',
+        previousPendingAmount,
+      );
       const message = `Hi ${selectedRoomTenets?.name}
-
+        
 ${
   type === 'whatsapp'
     ? '_Electricity bill for the month of_ *'
@@ -112,11 +118,7 @@ ${
           ? '_Room Rent_            |        *'
           : 'Room Rent            |        '
       }${roomRent}${type === 'whatsapp' ? '*|' : '|'}
-| ${
-        type === 'whatsapp'
-          ? '_Total Amount_         |          *'
-          : 'Total Amount         |          '
-      }${amount}${type === 'whatsapp' ? '*|' : '|'}
+
 ${
   pendingAmount > 0
     ? `| ${
@@ -126,6 +128,29 @@ ${
       }${pendingAmount}${type === 'whatsapp' ? '*|' : '|'}`
     : ''
 }
+| ${
+        type === 'whatsapp'
+          ? '_Total Amount_         |          *'
+          : 'Total Amount         |          '
+      }${amount}${type === 'whatsapp' ? '*|' : '|'}
+${
+  previousPendingAmount > 0
+    ? `| ${
+        type === 'whatsapp'
+          ? '_Previous Pending Amount_         |          *'
+          : 'Previous Pending Amount         |          '
+      }${previousPendingAmount}${type === 'whatsapp' ? '*|' : '|'}`
+    : ''
+}
+      ${
+        totalPendingAmount > 0
+          ? `| ${
+              type === 'whatsapp'
+                ? '_Total Pending Amount_         |          *'
+                : 'Total Pending Amount         |          '
+            }${totalPendingAmount}${type === 'whatsapp' ? '*|' : '|'}`
+          : ''
+      }
 ------------------------------------------------
 
 Please pay your bill on time to mobile number ${
@@ -136,7 +161,7 @@ Please pay your bill on time to mobile number ${
 
       return message;
     },
-    [selectedRoomTenets?.name],
+    [selectedRoomTenets?.name, totalPendingAmount],
   );
 
   const handleMarkAsPaid = useCallback(
