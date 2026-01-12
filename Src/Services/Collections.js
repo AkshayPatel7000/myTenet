@@ -19,22 +19,40 @@ import moment from 'moment';
 const addUser = async user => {
   const {uid, email, displayName, photoURL} = user;
   try {
-    const data = await firestore()
-      .collection('users')
-      .doc(uid)
-      .set({
-        uid,
-        email,
-        name: displayName || '',
-        picture: photoURL || '',
-      });
-    console.log('🚀 ~ addUser ~ data:', data);
+    // Check if user document exists
+    const userDoc = await firestore().collection('users').doc(uid).get();
 
-    if (data?._documentPath._parts?.at(-1)) {
-      showSuccess('addUser has been Added');
+    if (userDoc.exists) {
+      // User exists, update the document
+      await firestore()
+        .collection('users')
+        .doc(uid)
+        .set(
+          {
+            uid,
+            email,
+            name: displayName || '',
+            picture: photoURL || '',
+          },
+          {merge: true}, // Merge with existing data instead of overwriting
+        );
+      console.log('🚀 ~ addUser ~ User updated:', uid);
+    } else {
+      // User doesn't exist, create new document
+      await firestore()
+        .collection('users')
+        .doc(uid)
+        .set({
+          uid,
+          email,
+          name: displayName || '',
+          picture: photoURL || '',
+        });
+      console.log('🚀 ~ addUser ~ User created:', uid);
     }
   } catch (error) {
     console.log('🚀 ~ addUser ~ error:', error);
+    showError('Failed to save user details');
   }
 };
 const getUser = async userId => {

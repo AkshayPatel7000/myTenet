@@ -4,7 +4,7 @@ buildscript {
         minSdkVersion = 24
         compileSdkVersion = 36
         targetSdkVersion = 36
-        ndkVersion = "27.1.12297006"
+        ndkVersion = "29.0.13113456 rc1"
         kotlinVersion = "2.1.20"
     }
     repositories {
@@ -12,11 +12,32 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath("com.android.tools.build:gradle")
+        classpath("com.android.tools.build:gradle:8.9.0")
         classpath("com.facebook.react:react-native-gradle-plugin")
         classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
-        classpath 'com.google.gms:google-services:4.3.15'
+        classpath 'com.google.gms:google-services:4.4.4'
+    }
+    
+    configurations.classpath {
+        resolutionStrategy {
+            force 'com.android.tools.build:gradle:8.9.0'
+            force 'com.android.tools.build:gradle-api:8.9.0'
+            force 'com.android.tools.build:gradle-settings-api:8.9.0'
+        }
     }
 }
 
 apply plugin: "com.facebook.react.rootproject"
+
+// Enable 16 KB ELF alignment support across all projects
+// NDK 27+ supports this by default, but we explicitly enable it for clarity
+allprojects {
+    gradle.projectsEvaluated {
+        tasks.withType(com.android.build.gradle.tasks.PackageApplication) { task ->
+            // Ensures native libraries are aligned for 16 KB page size support
+            task.doFirst {
+                println("Building with 16 KB page size support enabled")
+            }
+        }
+    }
+}

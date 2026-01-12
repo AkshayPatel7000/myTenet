@@ -71,24 +71,30 @@ const Login = ({navigation}) => {
       setLoading(true);
       await GoogleSignin.hasPlayServices({showPlayServicesUpdateDialog: true});
       // Get the users ID token
-      const {idToken} = await GoogleSignin.signIn();
+      const result = await GoogleSignin.signIn();
+      console.log('🚀 ~ _onGoogleLoginPress ~ result:', result);
+      if (result.data.idToken && result.type === 'success') {
+        // Create a Google credential with the token
+        const googleCredential = auth.GoogleAuthProvider.credential(
+          result.data.idToken,
+        );
 
-      // Create a Google credential with the token
-      const googleCredential = auth.GoogleAuthProvider.credential(idToken);
+        // Sign-in the user with the credential
+        const response = await auth().signInWithCredential(googleCredential);
 
-      // Sign-in the user with the credential
-      const response = await auth().signInWithCredential(googleCredential);
+        await addUser(response?.user);
 
-      await addUser(response?.user);
+        await getUser(response?.user?.uid);
 
-      await getUser(response?.user?.uid);
-
+        setLoading(false);
+        LocalStorage.storeToken(response?.user.uid);
+        dispatch(setAuthToken(response?.user.uid));
+        console.log('🚀 ~ const_onGoogleLoginPress= ~ response:', response);
+      }
       setLoading(false);
-      LocalStorage.storeToken(response?.user.uid);
-      dispatch(setAuthToken(response?.user.uid));
-      console.log('🚀 ~ const_onGoogleLoginPress= ~ response:', response);
     } catch (error) {
       console.log('🚀 ~ Login ~ error:', error);
+      setLoading(false);
     }
   };
   return (

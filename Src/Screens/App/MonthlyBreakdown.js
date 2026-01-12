@@ -313,8 +313,8 @@ Please pay your bill on time to mobile number ${
               {item.paidStatus
                 ? 'Paid'
                 : item.pendingAmount > 0
-                ? 'Partial Paid'
-                : 'Unpaid'}
+                  ? 'Partial Paid'
+                  : 'Unpaid'}
             </Text>
           </View>
         </View>
@@ -475,7 +475,12 @@ Please pay your bill on time to mobile number ${
         visible={userDialog}
         setVisible={setUserDialog}
         doneTitle="Update"
-        donePress={() => navigation.navigate(RoutesName.PROFILE)}
+        donePress={() => {
+          setUserDialog(false);
+          navigation.navigate(RoutesName.BOTTOM_TABS, {
+            screen: RoutesName.PROFILE,
+          });
+        }}
       />
       <ShareBillModal
         visible={shareModalVisible}

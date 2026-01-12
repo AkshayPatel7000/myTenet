@@ -19,7 +19,7 @@ const BottomTab = createBottomTabNavigator();
 function MyTabBar({state, descriptors, navigation}) {
   const {colors, dark} = useTheme();
   const styles = getStyles(colors, dark);
-  const scrollY = new Animated.Value(0);
+  const scrollY = React.useRef(new Animated.Value(0)).current;
   const translateY = scrollY.interpolate({
     inputRange: [0, 60],
     outputRange: [0, -60],
@@ -37,15 +37,6 @@ function MyTabBar({state, descriptors, navigation}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const startAnimation = () => {
-    Animated.spring(scrollY, {
-      toValue: 450,
-      duration: 2000,
-      friction: 1,
-      tension: 20,
-      useNativeDriver: true,
-    }).start();
-  };
   const _keyboardDidShow = () => {
     setShowTab(false);
     scrollY.setValue(-100);
@@ -69,11 +60,10 @@ function MyTabBar({state, descriptors, navigation}) {
                 options.tabBarLabel !== undefined
                   ? options.tabBarLabel
                   : options.title !== undefined
-                  ? options.title
-                  : route.name;
+                    ? options.title
+                    : route.name;
               const isFocused = state.index === index;
               const onPress = () => {
-                startAnimation();
                 navigation.navigate({name: route.name, merge: true});
               };
 
@@ -125,8 +115,7 @@ const BottomTabs = ({theme}) => {
       // eslint-disable-next-line react/no-unstable-nested-components
       tabBar={tabsProps => <MyTabBar {...tabsProps} />}
       screenOptions={{headerShown: false, tabBarHideOnKeyboard: true}}
-      options={{tabBarHideOnKeyboard: true}}
-      initialRouteName="Dashboard">
+      options={{tabBarHideOnKeyboard: true}}>
       <BottomTab.Screen
         name={RoutesName.HOME}
         options={{
@@ -141,6 +130,8 @@ const BottomTabs = ({theme}) => {
       <BottomTab.Screen
         name={RoutesName.TENANT}
         options={{
+          tabBarHideOnKeyboard: true,
+
           icon: 'account-cash',
           iconInActive: 'account-cash',
           iconColor: theme.colors.primary,
@@ -151,6 +142,8 @@ const BottomTabs = ({theme}) => {
       <BottomTab.Screen
         name={RoutesName.PROFILE}
         options={{
+          tabBarHideOnKeyboard: true,
+
           icon: 'face-man-profile',
           iconInActive: 'face-man-profile',
           iconColor: theme.colors.primary,

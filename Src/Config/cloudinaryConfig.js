@@ -12,7 +12,7 @@ export const CLOUDINARY_CONFIG = {
   UPLOAD_PRESET: 'electricity_bills_unsigned', // Update this after creating the preset
 
   // API Key (for reference, not used in unsigned uploads)
-  API_KEY: '971256695874381',
+  API_KEY: '',
 
   // API Secret (NEVER expose this in production client-side code!)
   // Only included here for reference - not used in client-side uploads
