@@ -89,71 +89,68 @@ const MonthlyBreakdown = ({navigation}) => {
       const message = `Hi ${selectedRoomTenets?.name}
         
 ${
-  type === 'whatsapp'
-    ? '_Electricity bill for the month of_ *'
-    : 'Electricity bill for the month of '
+  type === 'whatsapp' ? '_Bill for the month of_ *' : 'Bill for the month of '
 }${date}*
 
 ------------------------------------------------
 | ${
         type === 'whatsapp'
-          ? '_Last month reading_   |*'
-          : 'Last month reading   |'
-      }${oldReading}${type === 'whatsapp' ? '*|' : '|'}
+          ? '_Old reading_          | *'
+          : 'Old reading            |'
+      }${oldReading}${type === 'whatsapp' ? '* |' : '|'}
 | ${
         type === 'whatsapp'
-          ? '_Current month reading_|      *'
-          : 'Current month reading|      '
-      }${newReading}${type === 'whatsapp' ? '*|' : '|'}
+          ? '_New reading_        | *'
+          : 'New reading          |'
+      }${newReading}${type === 'whatsapp' ? '* |' : '|'}
 | ${
         type === 'whatsapp'
-          ? '_Total units_          |           *'
-          : 'Total units          |           '
-      }${units}${type === 'whatsapp' ? '*|' : '|'}
+          ? '_Units used_            | *'
+          : 'Units used              |'
+      }${units}${type === 'whatsapp' ? '* |' : '|'}
 | ${
         type === 'whatsapp'
-          ? '_Total electricity bill_|         *'
-          : 'Total electricity bill|         '
-      }${eleBill}${type === 'whatsapp' ? '*|' : '|'}
+          ? '_Electricity Bill_       | *'
+          : 'Electricity Bill         |'
+      }${eleBill}${type === 'whatsapp' ? '* |' : '|'}
 ------------------------------------------------
 | ${
         type === 'whatsapp'
-          ? '_Room Rent_            |        *'
-          : 'Room Rent            |        '
-      }${roomRent}${type === 'whatsapp' ? '*|' : '|'}
-
+          ? '_Rent_                    | *'
+          : 'Rent                      |'
+      }${roomRent}${type === 'whatsapp' ? '* |' : '|'}
 ${
   pendingAmount > 0
     ? `| ${
         type === 'whatsapp'
-          ? '_Pending Amount_         |          *'
+          ? '_Pending Amount_       | *'
           : 'Pending Amount         |          '
-      }${pendingAmount}${type === 'whatsapp' ? '*|' : '|'}`
+      }${pendingAmount}${type === 'whatsapp' ? '* |' : '|'}`
     : ''
 }
 | ${
         type === 'whatsapp'
-          ? '_Total Amount_         |          *'
-          : 'Total Amount         |          '
-      }${amount}${type === 'whatsapp' ? '*|' : '|'}
+          ? '_This Month Total_     | *'
+          : 'This Month Total       |'
+      }${amount}${type === 'whatsapp' ? '* |' : '|'}
 ${
   previousPendingAmount > 0
     ? `| ${
         type === 'whatsapp'
-          ? '_Previous Pending Amount_         |          *'
-          : 'Previous Pending Amount         |          '
-      }${previousPendingAmount}${type === 'whatsapp' ? '*|' : '|'}`
+          ? '_Previous Due_           | *'
+          : 'Previous Due             |'
+      }${previousPendingAmount}${type === 'whatsapp' ? '* |' : '|'}`
     : ''
 }
-      ${
-        totalPendingAmount > 0
-          ? `| ${
-              type === 'whatsapp'
-                ? '_Total Pending Amount_         |          *'
-                : 'Total Pending Amount         |          '
-            }${totalPendingAmount}${type === 'whatsapp' ? '*|' : '|'}`
-          : ''
-      }
+${
+  totalPendingAmount > 0
+    ? `| ${
+        type === 'whatsapp'
+          ? '_Total Payable_          | *'
+          : 'Total Payable            |'
+      }${totalPendingAmount}${type === 'whatsapp' ? '* |' : '|'}`
+    : ''
+}
 ------------------------------------------------
 
 Please pay your bill on time to mobile number ${
@@ -323,15 +320,15 @@ Please pay your bill on time to mobile number ${
             {moment(item.createdAt).format('MMMM YYYY')}
           </Text>
           <View style={styles.textInfoContainer}>
-            <Text style={styles.title}>Current Reading</Text>
+            <Text style={styles.title}>New Reading</Text>
             <Text>{Number(item.currentReading)}</Text>
           </View>
           <View style={styles.textInfoContainer}>
-            <Text style={styles.title}>Previous Reading</Text>
+            <Text style={styles.title}>Old Reading</Text>
             <Text>{Number(item?.previousReading)}</Text>
           </View>
           <View style={styles.textInfoContainer}>
-            <Text style={styles.title}>Total Unit Burned</Text>
+            <Text style={styles.title}>Units Used</Text>
             <Text>{Number(item?.totalUnitBurned)}</Text>
           </View>
           <View style={styles.textInfoContainer}>
@@ -339,22 +336,33 @@ Please pay your bill on time to mobile number ${
             <Text>₹ {Number(item?.perUnit)}</Text>
           </View>
           <View style={styles.textInfoContainerTotal}>
-            <Text style={styles.totalBillTitle}>Total Electricity bill</Text>
+            <Text style={styles.totalBillTitle}>Electricity Bill</Text>
             <Text style={styles.totalBillAmount}>₹ {item.totalAmount}</Text>
           </View>
           <View style={styles.textInfoContainerTotal}>
-            <Text style={styles.totalBillTitle}>Total Amount</Text>
+            <Text style={styles.totalBillTitle}>This Month Total</Text>
             <Text style={styles.totalBillAmount}>
               ₹ {Number(item?.totalAmount) + Number(selectedRoom?.rent)}
             </Text>
           </View>
           {item.pendingAmount > 0 && (
-            <View style={styles.textInfoContainerTotal}>
-              <Text style={styles.totalBillTitle}>Pending Amount</Text>
-              <Text style={[styles.totalBillAmount, {color: colors.error}]}>
-                ₹ {item.pendingAmount}
-              </Text>
-            </View>
+            <>
+              <View style={styles.textInfoContainerTotal}>
+                <Text style={styles.totalBillTitle}>Partial Paid Amount</Text>
+                <Text style={[styles.totalBillAmount, {color: colors.error}]}>
+                  ₹{' '}
+                  {Number(item?.totalAmount) +
+                    Number(selectedRoom?.rent) -
+                    item.pendingAmount}
+                </Text>
+              </View>
+              <View style={styles.textInfoContainerTotal}>
+                <Text style={styles.totalBillTitle}>Pending Amount</Text>
+                <Text style={[styles.totalBillAmount, {color: colors.error}]}>
+                  ₹ {item.pendingAmount}
+                </Text>
+              </View>
+            </>
           )}
         </View>
         {!item?.paidStatus && (
@@ -436,7 +444,7 @@ Please pay your bill on time to mobile number ${
         {totalPendingAmount > 0 && (
           <View style={styles.pendingSummaryContainer}>
             <Text style={styles.pendingSummaryText}>
-              Total Pending Amount: ₹{totalPendingAmount}
+              Total Payable: ₹{totalPendingAmount}
             </Text>
           </View>
         )}

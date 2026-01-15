@@ -19,7 +19,7 @@ const PartialPaymentModal = ({
       return;
     }
     if (paidAmount > totalAmount) {
-      setError('Amount cannot be greater than total amount');
+      setError('Amount cannot be greater than the total amount');
       return;
     }
     const pendingAmount = totalAmount - paidAmount;
@@ -35,9 +35,11 @@ const PartialPaymentModal = ({
         <Dialog.Title>Partial Payment</Dialog.Title>
         <Dialog.Content>
           <View style={styles.container}>
-            <Text style={styles.totalAmount}>Total Amount: ₹{totalAmount}</Text>
+            <Text style={styles.totalAmount}>
+              This Month Total: ₹{totalAmount}
+            </Text>
             <TextInput
-              label="Enter Amount Paid"
+              label="Amount Paid"
               value={amount}
               onChangeText={text => {
                 setAmount(text);

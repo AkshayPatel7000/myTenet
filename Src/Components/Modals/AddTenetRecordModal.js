@@ -49,7 +49,7 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
     newReading: Yup.number()
       .min(
         Number(room.startReading),
-        `Current reading must be greater then ${room.startReading}`,
+        `New reading must be greater than ${room.startReading}`,
       )
       .required('New Reading is required!'),
     image: Yup.string(),
@@ -223,15 +223,15 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
                 </HelperText>
 
                 <View style={styles.textInfoContainer}>
-                  <Text style={styles.title}>Previous Reading</Text>
+                  <Text style={styles.title}>Old Reading</Text>
                   <Text>{Number(room.startReading)}</Text>
                 </View>
                 <View style={styles.textInfoContainer}>
-                  <Text style={styles.title}>Current Reading</Text>
+                  <Text style={styles.title}>New Reading</Text>
                   <Text>{Number(values?.newReading)}</Text>
                 </View>
                 <View style={styles.textInfoContainer}>
-                  <Text style={styles.title}>Total Unit Burned</Text>
+                  <Text style={styles.title}>Units Used</Text>
                   <Text>
                     {values?.newReading
                       ? Number(values?.newReading) - Number(room.startReading)
@@ -243,9 +243,7 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
                   <Text>₹ {Number(room?.perUnit)}</Text>
                 </View>
                 <View style={styles.textInfoContainerTotal}>
-                  <Text style={styles.totalBillTitle}>
-                    Total Electricity bill
-                  </Text>
+                  <Text style={styles.totalBillTitle}>Electricity Bill</Text>
                   <Text style={styles.totalBillAmount}>
                     ₹{' '}
                     {values?.newReading

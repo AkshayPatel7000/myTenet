@@ -24,10 +24,10 @@ const ShareBillModal = ({visible, hideModal, billData, billImage}) => {
 
       // Share the image
       const shareOptions = {
-        title: 'Electricity Bill',
+        title: 'Monthly Rent & Electricity Bill',
         message: `Hi ${billData.name},
 
-Please find the electricity bill for the month of ${billData.date}.`,
+Please find your bill for ${billData.date} below.`,
         url: `file://${uri}`,
         type: 'image/png',
       };
@@ -70,7 +70,7 @@ Please find the electricity bill for the month of ${billData.date}.`,
               {/* Bill Breakdown */}
               <View style={styles.billContainer}>
                 <Text variant="titleMedium" style={styles.sectionTitle}>
-                  Electricity Bill
+                  Rent & Electricity Bill
                 </Text>
                 <Text variant="titleMedium" style={styles.sectionTitle}>
                   {billData.date}
@@ -80,22 +80,22 @@ Please find the electricity bill for the month of ${billData.date}.`,
 
                 {/* Meter Readings */}
                 <View style={styles.row}>
-                  <Text style={styles.label}>Last Month Reading</Text>
+                  <Text style={styles.label}>Old Reading</Text>
                   <Text style={styles.value}>{billData.oldReading}</Text>
                 </View>
 
                 <View style={styles.row}>
-                  <Text style={styles.label}>Current Month Reading</Text>
+                  <Text style={styles.label}>New Reading</Text>
                   <Text style={styles.value}>{billData.newReading}</Text>
                 </View>
 
                 <View style={styles.row}>
-                  <Text style={styles.label}>Total Units</Text>
+                  <Text style={styles.label}>Units Used</Text>
                   <Text style={styles.value}>{billData.units}</Text>
                 </View>
 
                 <View style={styles.row}>
-                  <Text style={styles.label}>Total Electricity Bill</Text>
+                  <Text style={styles.label}>Electricity Bill</Text>
                   <Text style={styles.value}>₹ {billData.eleBill}</Text>
                 </View>
 
@@ -103,30 +103,30 @@ Please find the electricity bill for the month of ${billData.date}.`,
 
                 {/* Room Rent */}
                 <View style={styles.row}>
-                  <Text style={styles.label}>Room Rent</Text>
+                  <Text style={styles.label}>Rent</Text>
                   <Text style={styles.value}>₹ {billData.roomRent}</Text>
                 </View>
 
-                {/* Pending Amount */}
+                {/* Pending Amount
                 {billData.pendingAmount > 0 && (
                   <View style={styles.row}>
-                    <Text style={styles.label}>Pending Amount</Text>
+                    <Text style={styles.label}>Extra / Misc</Text>
                     <Text style={[styles.value, {color: '#d32f2f'}]}>
                       ₹ {billData.pendingAmount}
                     </Text>
                   </View>
-                )}
+                )} */}
 
                 {/* Total Amount */}
                 <View style={[styles.row, styles.totalRow]}>
-                  <Text style={styles.totalLabel}>Total Amount</Text>
+                  <Text style={styles.totalLabel}>This Month Total</Text>
                   <Text style={styles.totalValue}>₹ {billData.amount}</Text>
                 </View>
 
                 {/* Previous Pending Amount */}
                 {billData.previousPendingAmount > 0 && (
                   <View style={styles.row}>
-                    <Text style={styles.label}>Previous Pending Amount</Text>
+                    <Text style={styles.label}>Previous Due</Text>
                     <Text style={[styles.value, {color: '#d32f2f'}]}>
                       ₹ {billData.previousPendingAmount}
                     </Text>
@@ -136,7 +136,7 @@ Please find the electricity bill for the month of ${billData.date}.`,
                 {/* Total Pending Amount */}
                 {billData.totalPendingAmount > 0 && (
                   <View style={[styles.row, styles.totalRow]}>
-                    <Text style={styles.totalLabel}>Total Pending Amount</Text>
+                    <Text style={styles.totalLabel}>Total Payable</Text>
                     <Text style={[styles.totalValue, {color: '#d32f2f'}]}>
                       ₹ {billData.totalPendingAmount}
                     </Text>
