@@ -83,8 +83,8 @@ android {
         applicationId "com.mytenant"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 11
-        versionName "1.1.11"
+        versionCode 12
+        versionName "1.1.12"
         
         // Support for 16 KB page size devices (required for Google Play targeting Android 15+)
         // Enables the app to work on devices with 16 KB memory pages (starting Nov 1, 2025)

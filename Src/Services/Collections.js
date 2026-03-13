@@ -290,7 +290,9 @@ const updateRoomTenet = async (updateData, userData) => {
       .doc(userData.tenantId)
       .update({
         ...updateData,
-        startDate: moment(updateData?.startDate).format('DD-MMMM-YYYY'),
+        ...(updateData?.startDate && {
+          startDate: moment(updateData?.startDate).format('DD-MMMM-YYYY'),
+        }),
       });
     console.log({
       currentTenantId: userData.tenantId,
