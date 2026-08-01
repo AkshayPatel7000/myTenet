@@ -23,15 +23,13 @@ import {selectUserRooms} from '../../Store/Slices/AuthSlice';
 import RoutesName from '../../Utils/Resource/RoutesName';
 import Header from '../../Components/Header/Header';
 import moment from 'moment';
-import SVG from '../../Assets/SVG';
 import Loader from '../../Components/Loader';
 import EmptyComponent from '../../Components/EmptyComponent';
 import AppleStyleSwipeableRow from '../../Components/Swipable/AppleStyleSwipeableRow';
 import MyDialog from '../../Components/Modals/Dialog';
-import {onOpenDialer} from '../../Utils/helperFunction';
 
 const AnimatedRoomCard = ({item, index, onPress, onDeletePrompt}) => {
-  const {colors} = useTheme();
+  const {colors, dark} = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateYAnim = useRef(new Animated.Value(30)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -79,33 +77,33 @@ const AnimatedRoomCard = ({item, index, onPress, onDeletePrompt}) => {
         transform: [{translateY: translateYAnim}, {scale: scaleAnim}],
       }}>
       <AppleStyleSwipeableRow
-        style={styles.swipeableContainer}
+        style={[styles.swipeableContainer, {backgroundColor: colors.surface}]}
         onSwipe={() => onDeletePrompt(item)}>
         <TouchableOpacity
           activeOpacity={0.9}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           onPress={() => onPress(item)}>
-          <Surface style={[styles.cardSurface, {borderLeftColor: isOccupied ? '#6366F1' : '#F59E0B'}]}>
+          <Surface style={[styles.cardSurface, {backgroundColor: colors.surface, borderLeftColor: isOccupied ? colors.primary : '#F59E0B'}]}>
             <View style={styles.cardHeader}>
               <View style={styles.roomIdentity}>
-                <View style={[styles.iconCircle, {backgroundColor: isOccupied ? '#EEF2FF' : '#FEF3C7'}]}>
+                <View style={[styles.iconCircle, {backgroundColor: isOccupied ? (dark ? '#312E81' : '#EEF2FF') : (dark ? '#78350F' : '#FEF3C7')}]}>
                   <Icon
                     source="home-city"
                     size={24}
-                    color={isOccupied ? '#4F46E5' : '#D97706'}
+                    color={isOccupied ? colors.primary : '#D97706'}
                   />
                 </View>
                 <View>
-                  <Text style={styles.roomNameText}>{item?.roomName}</Text>
-                  <Text style={styles.roomNoText}>Room No. {item?.roomNo}</Text>
+                  <Text style={[styles.roomNameText, {color: colors.onSurface}]}>{item?.roomName}</Text>
+                  <Text style={[styles.roomNoText, {color: colors.onSurfaceVariant}]}>Room No. {item?.roomNo}</Text>
                 </View>
               </View>
 
               <View
                 style={[
                   styles.statusBadge,
-                  {backgroundColor: isOccupied ? '#DCFCE7' : '#FEF3C7'},
+                  {backgroundColor: isOccupied ? (dark ? '#064E3B' : '#DCFCE7') : (dark ? '#78350F' : '#FEF3C7')},
                 ]}>
                 <View
                   style={[
@@ -116,48 +114,48 @@ const AnimatedRoomCard = ({item, index, onPress, onDeletePrompt}) => {
                 <Text
                   style={[
                     styles.statusBadgeText,
-                    {color: isOccupied ? '#15803D' : '#B45309'},
+                    {color: isOccupied ? (dark ? '#6EE7B7' : '#15803D') : (dark ? '#FDE68A' : '#B45309')},
                   ]}>
                   {isOccupied ? 'Occupied' : 'Vacant'}
                 </Text>
               </View>
             </View>
 
-            <View style={styles.cardDivider} />
+            <View style={[styles.cardDivider, {backgroundColor: colors.outlineVariant || '#F1F5F9'}]} />
 
             <View style={styles.cardBody}>
               <View style={styles.detailRow}>
-                <Icon source="account" size={18} color="#64748B" />
-                <Text style={styles.detailLabel}>Tenant:</Text>
-                <Text style={styles.detailValue}>
+                <Icon source="account" size={18} color={colors.onSurfaceVariant} />
+                <Text style={[styles.detailLabel, {color: colors.onSurfaceVariant}]}>Tenant:</Text>
+                <Text style={[styles.detailValue, {color: colors.onSurface}]}>
                   {hasTenant ? item?.tenetName : 'No active tenant assigned'}
                 </Text>
               </View>
 
-              <View style={styles.statsGrid}>
+              <View style={[styles.statsGrid, {backgroundColor: dark ? '#334155' : '#F8FAFC'}]}>
                 <View style={styles.statItem}>
-                  <Text style={styles.statLabel}>Monthly Rent</Text>
-                  <Text style={styles.statValue}>₹ {item?.rent || 0}</Text>
+                  <Text style={[styles.statLabel, {color: colors.onSurfaceVariant}]}>Monthly Rent</Text>
+                  <Text style={[styles.statValue, {color: colors.onSurface}]}>₹ {item?.rent || 0}</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Text style={styles.statLabel}>Rate / Unit</Text>
-                  <Text style={styles.statValue}>₹ {item?.perUnit || 10}</Text>
+                  <Text style={[styles.statLabel, {color: colors.onSurfaceVariant}]}>Rate / Unit</Text>
+                  <Text style={[styles.statValue, {color: colors.onSurface}]}>₹ {item?.perUnit || 10}</Text>
                 </View>
                 <View style={styles.statItem}>
-                  <Text style={styles.statLabel}>Baseline Reading</Text>
-                  <Text style={styles.statValue}>{item?.startReading || 0}</Text>
+                  <Text style={[styles.statLabel, {color: colors.onSurfaceVariant}]}>Baseline Reading</Text>
+                  <Text style={[styles.statValue, {color: colors.onSurface}]}>{item?.startReading || 0}</Text>
                 </View>
               </View>
             </View>
 
             <View style={styles.cardFooter}>
-              <Text style={styles.footerDate}>
+              <Text style={[styles.footerDate, {color: colors.onSurfaceVariant}]}>
                 {item?.startDate
                   ? `Assigned: ${moment(item?.startDate, 'DD-MMMM-YYYY').format('DD MMM YYYY')}`
                   : 'Created recently'}
               </Text>
               <View style={styles.footerAction}>
-                <Text style={styles.actionLink}>View Details</Text>
+                <Text style={[styles.actionLink, {color: colors.primary}]}>View Details</Text>
                 <Icon source="chevron-right" size={18} color={colors.primary} />
               </View>
             </View>
@@ -174,7 +172,7 @@ const MyTenant = ({navigation}) => {
   const [quickSetupVisible, setQuickSetupVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const rooms = useTypedSelector(selectUserRooms);
-  const {colors} = useTheme();
+  const {colors, dark} = useTheme();
   const [refreshing, setRefreshing] = useState(false);
 
   const onPress = async room => {
@@ -215,8 +213,7 @@ const MyTenant = ({navigation}) => {
         rightIconPress={() => setQuickSetupVisible(true)}
       />
 
-
-      {loading && <Loader />}
+      {loading && <Loader message="Loading properties..." />}
 
       <VirtualizedScrollView
         contentContainerStyle={{padding: 16, paddingBottom: 150}}
@@ -230,19 +227,19 @@ const MyTenant = ({navigation}) => {
         {/* Properties Summary Pill Bar */}
         {rooms && rooms.length > 0 ? (
           <View style={styles.summaryBar}>
-            <View style={styles.summaryPill}>
-              <Icon source="home-city" size={16} color="#4F46E5" />
-              <Text style={styles.summaryPillText}>{rooms.length} Rooms</Text>
+            <View style={[styles.summaryPill, {backgroundColor: dark ? '#312E81' : '#EEF2FF'}]}>
+              <Icon source="home-city" size={16} color={colors.primary} />
+              <Text style={[styles.summaryPillText, {color: colors.primary}]}>{rooms.length} Rooms</Text>
             </View>
-            <View style={[styles.summaryPill, {backgroundColor: '#DCFCE7'}]}>
+            <View style={[styles.summaryPill, {backgroundColor: dark ? '#064E3B' : '#DCFCE7'}]}>
               <Icon source="check-circle" size={16} color="#16A34A" />
-              <Text style={[styles.summaryPillText, {color: '#15803D'}]}>
+              <Text style={[styles.summaryPillText, {color: dark ? '#6EE7B7' : '#15803D'}]}>
                 {occupiedCount} Occupied
               </Text>
             </View>
-            <View style={[styles.summaryPill, {backgroundColor: '#FEF3C7'}]}>
+            <View style={[styles.summaryPill, {backgroundColor: dark ? '#78350F' : '#FEF3C7'}]}>
               <Icon source="clock-outline" size={16} color="#D97706" />
-              <Text style={[styles.summaryPillText, {color: '#B45309'}]}>
+              <Text style={[styles.summaryPillText, {color: dark ? '#FDE68A' : '#B45309'}]}>
                 {vacantCount} Vacant
               </Text>
             </View>
@@ -269,13 +266,8 @@ const MyTenant = ({navigation}) => {
               onActionPress={() => setQuickSetupVisible(true)}
             />
           }
-
         />
       </VirtualizedScrollView>
-
-
-
-
 
       <UnifiedQuickSetupModal
         visible={quickSetupVisible}
@@ -299,32 +291,6 @@ const MyTenant = ({navigation}) => {
 export default MyTenant;
 
 const styles = StyleSheet.create({
-  fabWrapper: {
-    position: 'absolute',
-    right: 16,
-    bottom: 85,
-    borderRadius: 30,
-    elevation: 8,
-    shadowColor: '#4F46E5',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.35,
-    shadowRadius: 10,
-  },
-  fabGradient: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: 30,
-  },
-  fabLabel: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '700',
-    marginLeft: 8,
-    letterSpacing: 0.2,
-  },
-
   summaryBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -334,7 +300,6 @@ const styles = StyleSheet.create({
   summaryPill: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#EEF2FF',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 20,
@@ -343,15 +308,12 @@ const styles = StyleSheet.create({
   summaryPillText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#4F46E5',
   },
   swipeableContainer: {
-    backgroundColor: '#FFF',
     borderRadius: 16,
     overflow: 'hidden',
   },
   cardSurface: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 16,
     padding: 16,
     borderLeftWidth: 5,
@@ -382,12 +344,10 @@ const styles = StyleSheet.create({
   roomNameText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
     textTransform: 'capitalize',
   },
   roomNoText: {
     fontSize: 12,
-    color: '#64748B',
     fontWeight: '500',
     marginTop: 1,
   },
@@ -410,7 +370,6 @@ const styles = StyleSheet.create({
   },
   cardDivider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
     marginVertical: 12,
   },
   cardBody: {
@@ -423,20 +382,17 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 13,
-    color: '#64748B',
     marginLeft: 6,
     marginRight: 4,
   },
   detailValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#334155',
     textTransform: 'capitalize',
     flex: 1,
   },
   statsGrid: {
     flexDirection: 'row',
-    backgroundColor: '#F8FAFC',
     borderRadius: 12,
     padding: 10,
     justifyContent: 'space-between',
@@ -447,14 +403,12 @@ const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 11,
-    color: '#64748B',
     fontWeight: '500',
     marginBottom: 2,
   },
   statValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F172A',
   },
   cardFooter: {
     flexDirection: 'row',
@@ -465,7 +419,6 @@ const styles = StyleSheet.create({
   },
   footerDate: {
     fontSize: 11,
-    color: '#94A3B8',
     fontWeight: '500',
   },
   footerAction: {
@@ -475,7 +428,6 @@ const styles = StyleSheet.create({
   actionLink: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#4F46E5',
     marginRight: 2,
   },
 });

@@ -35,7 +35,7 @@ import KeyboardAwareScrollView from '../KeyboardAwareScrollView';
 
 const AddTenetRecordModal = ({visible, hideModal, editData}) => {
   const [loading, setLoading] = useState(false);
-  const {colors} = useTheme();
+  const {colors, dark} = useTheme();
   const room = useTypedSelector(selectSelectedRoom);
 
   const initialValue = {
@@ -129,14 +129,22 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
       <Modal
         visible={visible}
         onDismiss={hideModal}
-        contentContainerStyle={styles.sheetContainer}>
-        <View style={styles.sheetPill} />
+        contentContainerStyle={[
+          styles.sheetContainer,
+          {backgroundColor: colors.surface},
+        ]}>
+        <View
+          style={[
+            styles.sheetPill,
+            {backgroundColor: colors.outlineVariant || '#CBD5E1'},
+          ]}
+        />
 
         <View style={{flex: 1}}>
           <View style={styles.headerContainer}>
             <View style={styles.titleRow}>
               <Icon source="counter" size={24} color={colors.primary} />
-              <Text style={styles.heading}>
+              <Text style={[styles.heading, {color: colors.onSurface}]}>
                 {editData?.recordId ? 'Edit Meter Reading' : 'Log Meter Reading'}
               </Text>
             </View>
@@ -165,7 +173,14 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
               return (
                 <KeyboardAwareScrollView contentContainerStyle={styles.scrollContent}>
                   {/* Camera Photo Picker */}
-                  <View style={styles.imagePickerWrapper}>
+                  <View
+                    style={[
+                      styles.imagePickerWrapper,
+                      {
+                        backgroundColor: dark ? '#334155' : '#F8FAFC',
+                        borderColor: colors.outlineVariant || '#E2E8F0',
+                      },
+                    ]}>
                     {values?.image ? (
                       <View style={styles.imageBox}>
                         <Image
@@ -191,7 +206,7 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
                             size={36}
                             color={colors.primary}
                           />
-                          <Text style={styles.addImageText}>
+                          <Text style={[styles.addImageText, {color: colors.onSurfaceVariant}]}>
                             Snap Meter Reading Photo (Optional)
                           </Text>
                         </View>
@@ -208,37 +223,45 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
                     onBlur={handleBlur('newReading')}
                     value={values.newReading}
                     error={!!errors.newReading}
-                    style={styles.input}
                   />
                   <HelperText type="error" visible={!!errors.newReading}>
                     {errors.newReading}
                   </HelperText>
 
                   {/* Live Calculation Preview Box */}
-                  <Surface style={styles.calcPreviewBox}>
-                    <Text style={styles.calcBoxTitle}>Bill Computation Preview</Text>
+                  <Surface
+                    style={[
+                      styles.calcPreviewBox,
+                      {
+                        backgroundColor: dark ? '#334155' : '#F8FAFC',
+                        borderColor: colors.outlineVariant || '#E2E8F0',
+                      },
+                    ]}>
+                    <Text style={[styles.calcBoxTitle, {color: colors.onSurface}]}>
+                      Bill Computation Preview
+                    </Text>
                     <View style={styles.calcRow}>
-                      <Text style={styles.calcLabel}>Previous Reading</Text>
-                      <Text style={styles.calcValue}>{previousReading}</Text>
+                      <Text style={[styles.calcLabel, {color: colors.onSurfaceVariant}]}>Previous Reading</Text>
+                      <Text style={[styles.calcValue, {color: colors.onSurface}]}>{previousReading}</Text>
                     </View>
                     <View style={styles.calcRow}>
-                      <Text style={styles.calcLabel}>New Reading</Text>
-                      <Text style={styles.calcValue}>{newReadingVal || '-'}</Text>
+                      <Text style={[styles.calcLabel, {color: colors.onSurfaceVariant}]}>New Reading</Text>
+                      <Text style={[styles.calcValue, {color: colors.onSurface}]}>{newReadingVal || '-'}</Text>
                     </View>
                     <View style={styles.calcRow}>
-                      <Text style={styles.calcLabel}>Units Consumed</Text>
-                      <Text style={[styles.calcValue, {color: '#4F46E5'}]}>
+                      <Text style={[styles.calcLabel, {color: colors.onSurfaceVariant}]}>Units Consumed</Text>
+                      <Text style={[styles.calcValue, {color: colors.primary}]}>
                         {unitsBurned} units
                       </Text>
                     </View>
                     <View style={styles.calcRow}>
-                      <Text style={styles.calcLabel}>Electricity Dues (₹{ratePerUnit}/unit)</Text>
-                      <Text style={styles.calcValue}>₹ {electricityBill}</Text>
+                      <Text style={[styles.calcLabel, {color: colors.onSurfaceVariant}]}>Electricity Dues (₹{ratePerUnit}/unit)</Text>
+                      <Text style={[styles.calcValue, {color: colors.onSurface}]}>₹ {electricityBill}</Text>
                     </View>
-                    <View style={styles.calcDivider} />
+                    <View style={[styles.calcDivider, {backgroundColor: colors.outlineVariant || '#CBD5E1'}]} />
                     <View style={styles.totalDuesRow}>
-                      <Text style={styles.totalDuesLabel}>Total Dues (+ Rent ₹{room?.rent || 0})</Text>
-                      <Text style={styles.totalDuesValue}>₹ {totalMonthDues}</Text>
+                      <Text style={[styles.totalDuesLabel, {color: colors.onSurface}]}>Total Dues (+ Rent ₹{room?.rent || 0})</Text>
+                      <Text style={[styles.totalDuesValue, {color: colors.primary}]}>₹ {totalMonthDues}</Text>
                     </View>
                   </Surface>
 
@@ -251,7 +274,7 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
                     onChangeText={handleChange('note')}
                     onBlur={handleBlur('note')}
                     value={values.note}
-                    style={[styles.input, {marginTop: 10}]}
+                    style={{marginTop: 10}}
                   />
 
                   <Button
@@ -278,7 +301,6 @@ export default AddTenetRecordModal;
 
 const styles = StyleSheet.create({
   sheetContainer: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderBottomLeftRadius: 0,
@@ -296,7 +318,6 @@ const styles = StyleSheet.create({
     width: 38,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#CBD5E1',
     alignSelf: 'center',
     marginBottom: 10,
   },
@@ -312,7 +333,6 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 18,
-    color: '#0F172A',
     fontWeight: '700',
     marginLeft: 8,
   },
@@ -323,9 +343,7 @@ const styles = StyleSheet.create({
   imagePickerWrapper: {
     height: 130,
     borderRadius: 14,
-    backgroundColor: '#F8FAFC',
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     borderStyle: 'dashed',
     overflow: 'hidden',
     marginBottom: 14,
@@ -342,7 +360,6 @@ const styles = StyleSheet.create({
   addImageText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#64748B',
     marginTop: 6,
   },
   imageBox: {
@@ -358,21 +375,15 @@ const styles = StyleSheet.create({
     top: 6,
     right: 6,
   },
-  input: {
-    backgroundColor: '#FFF',
-  },
   calcPreviewBox: {
-    backgroundColor: '#F8FAFC',
     borderRadius: 14,
     padding: 14,
     marginVertical: 10,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   calcBoxTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#334155',
     marginBottom: 8,
   },
   calcRow: {
@@ -382,16 +393,13 @@ const styles = StyleSheet.create({
   },
   calcLabel: {
     fontSize: 12,
-    color: '#64748B',
   },
   calcValue: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
   },
   calcDivider: {
     height: 1,
-    backgroundColor: '#CBD5E1',
     marginVertical: 8,
   },
   totalDuesRow: {
@@ -402,12 +410,10 @@ const styles = StyleSheet.create({
   totalDuesLabel: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#0F172A',
   },
   totalDuesValue: {
     fontSize: 16,
     fontWeight: '800',
-    color: '#4F46E5',
   },
   submitBtn: {
     marginTop: 16,

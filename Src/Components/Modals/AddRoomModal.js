@@ -82,16 +82,28 @@ const AddRoomModal = ({visible, hideModal, editData}) => {
       <Modal
         visible={visible}
         onDismiss={hideModal}
-        contentContainerStyle={styles.sheetContainer}>
-        <View style={styles.sheetPill} />
+        contentContainerStyle={[
+          styles.sheetContainer,
+          {backgroundColor: colors.surface},
+        ]}>
+        <View
+          style={[
+            styles.sheetPill,
+            {backgroundColor: colors.outlineVariant || '#CBD5E1'},
+          ]}
+        />
 
         <KeyboardAvoidingView
           style={{flex: 1}}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.headerContainer}>
             <View style={styles.titleRow}>
-              <Icon source={isEditing ? 'home-edit' : 'home-plus'} size={24} color={colors.primary} />
-              <Text style={styles.heading}>
+              <Icon
+                source={isEditing ? 'home-edit' : 'home-plus'}
+                size={24}
+                color={colors.primary}
+              />
+              <Text style={[styles.heading, {color: colors.onSurface}]}>
                 {isEditing ? 'Edit Room Settings' : 'Add New Room'}
               </Text>
             </View>
@@ -227,7 +239,6 @@ export default AddRoomModal;
 
 const styles = StyleSheet.create({
   sheetContainer: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderBottomLeftRadius: 0,
@@ -245,7 +256,6 @@ const styles = StyleSheet.create({
     width: 38,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#CBD5E1',
     alignSelf: 'center',
     marginBottom: 10,
   },
@@ -261,7 +271,6 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 18,
-    color: '#0F172A',
     fontWeight: '700',
     marginLeft: 8,
   },

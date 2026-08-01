@@ -2,6 +2,7 @@ import React from 'react';
 import {StyleSheet, TouchableOpacity, View} from 'react-native';
 import {Icon, IconButton, Text, useTheme} from 'react-native-paper';
 import {useNavigation} from '@react-navigation/native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 const Header = ({
   title = '',
@@ -13,25 +14,40 @@ const Header = ({
 }) => {
   const navigation = useNavigation();
   const {colors} = useTheme();
+  const safeAreaInsets = useSafeAreaInsets();
+
+  const paddingTop = safeAreaInsets.top > 0 ? safeAreaInsets.top + 4 : 12;
 
   return (
-    <View style={styles.mainContainer}>
+    <View
+      style={[
+        styles.mainContainer,
+        {
+          backgroundColor: colors.surface,
+          borderBottomColor: colors.outlineVariant || '#E2E8F0',
+          paddingTop: paddingTop,
+        },
+      ]}>
       <View style={styles.headerRow}>
         {back && (
           <IconButton
             icon="arrow-left"
             size={20}
-            iconColor="#334155"
+            iconColor={colors.onSurface}
             style={styles.backBtn}
             onPress={() => navigation.goBack()}
           />
         )}
         <View style={styles.textContainer}>
-          <Text style={styles.title} numberOfLines={1}>
+          <Text
+            style={[styles.title, {color: colors.onSurface}]}
+            numberOfLines={1}>
             {title}
           </Text>
           {subtitle ? (
-            <Text style={styles.subtitle} numberOfLines={1}>
+            <Text
+              style={[styles.subtitle, {color: colors.onSurfaceVariant}]}
+              numberOfLines={1}>
               {subtitle}
             </Text>
           ) : null}
@@ -57,10 +73,8 @@ export default Header;
 
 const styles = StyleSheet.create({
   mainContainer: {
-    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
-    paddingVertical: 6,
+    paddingBottom: 8,
     paddingHorizontal: 12,
   },
   headerRow: {
@@ -81,12 +95,10 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#0F172A',
   },
   subtitle: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#64748B',
     marginTop: -1,
   },
   headerProminentBtn: {

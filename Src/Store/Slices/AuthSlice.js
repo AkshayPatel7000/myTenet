@@ -10,6 +10,7 @@ const initialState = {
   selectedTenant: {},
   roomTenantRecords: [],
   homeData: [],
+  isDarkMode: false,
 };
 
 const slice = createSlice({
@@ -43,18 +44,20 @@ const slice = createSlice({
     setUserData: (state, action) => {
       state.userData = action.payload;
     },
+    setDarkMode: (state, action) => {
+      state.isDarkMode = action.payload;
+    },
     resetAuthSlice: (state, action) => {
-      state = {
-        authToken: '',
-        userData: {},
-        userProfile: {},
-        userRooms: [],
-        selectedRoom: {},
-        roomTenants: [],
-        selectedTenant: {},
-        roomTenantRecords: [],
-        homeData: [],
-      };
+      state.authToken = '';
+      state.userData = {};
+      state.userProfile = {};
+      state.userRooms = [];
+      state.selectedRoom = {};
+      state.roomTenants = [];
+      state.selectedTenant = {};
+      state.roomTenantRecords = [];
+      state.homeData = [];
+      state.isDarkMode = false;
     },
   },
 });
@@ -70,6 +73,7 @@ export const {
   setRoomTenantRecords,
   setHomeData,
   setUserData,
+  setDarkMode,
   resetAuthSlice,
 } = slice.actions;
 
@@ -83,6 +87,6 @@ export const selectSelectedRoom = state => state.AuthSlice.selectedRoom;
 export const selectSelectedTenant = state => state.AuthSlice.selectedTenant;
 export const selectRoomTenants = state => state.AuthSlice.roomTenants;
 export const selectHomeData = state => state.AuthSlice.homeData;
-
+export const selectIsDarkMode = state => state.AuthSlice.isDarkMode;
 export const selectRoomTenantRecords = state =>
   state.AuthSlice.roomTenantRecords;

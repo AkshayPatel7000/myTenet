@@ -1,30 +1,34 @@
-import moment from 'moment';
-import React, {useEffect, useMemo, useState} from 'react';
-import {RefreshControl, StyleSheet, TouchableOpacity, View} from 'react-native';
+import React, {useMemo, useState} from 'react';
+import {
+  RefreshControl,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import {
   Button,
   Icon,
-  IconButton,
   ProgressBar,
   Surface,
   Text,
   useTheme,
 } from 'react-native-paper';
+import {useFocusEffect} from '@react-navigation/native';
 import Container from '../../Components/Container';
 import Header from '../../Components/Header/Header';
+import Loader from '../../Components/Loader';
+import QuickAddReadingModal from '../../Components/Modals/QuickAddReadingModal';
+import UnifiedQuickSetupModal from '../../Components/Modals/UnifiedQuickSetupModal';
 import VirtualizedScrollView from '../../Components/VirtualisedScroll';
 import {getData, getUser} from '../../Services/Collections';
 import {useTypedSelector} from '../../Store/MainStore';
 import {selectHomeData} from '../../Store/Slices/AuthSlice';
 import {sumArrayOfObjects} from '../../Utils/helperFunction';
-import {useFocusEffect} from '@react-navigation/native';
-import Loader from '../../Components/Loader';
-import UnifiedQuickSetupModal from '../../Components/Modals/UnifiedQuickSetupModal';
-import QuickAddReadingModal from '../../Components/Modals/QuickAddReadingModal';
+import moment from 'moment';
 
 const Home = props => {
-  const {colors} = useTheme();
+  const {colors, dark} = useTheme();
   const homeData = useTypedSelector(selectHomeData);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -65,62 +69,32 @@ const Home = props => {
         return {value: 0};
       }
     });
-
     return sumArrayOfObjects(paidAmount, 'value');
   }, [homeData]);
 
   const totalElectcityRentTillToday = useMemo(() => {
-    let paidAmount = [];
-    homeData.map(room => {
-      room?.tenet?.records?.map(e => {
-        if (e.paidStatus) {
-          paidAmount.push({value: e?.totalAmount || 0});
-        }
-      });
+    const paidAmount = homeData.map(room => {
+      return {value: room.tenet?.lastPaidAmount || 0};
     });
-
     return sumArrayOfObjects(paidAmount, 'value');
   }, [homeData]);
 
-  // Landlord Business Analytics Calculations
   const occupancyStats = useMemo(() => {
-    if (!homeData || homeData.length === 0) {
-      return {occupied: 0, vacant: 0, rate: 0, total: 0};
-    }
-    const total = homeData.length;
-    const occupied = homeData.filter(r => r.currentTenantId || r.tenet?.tenantId).length;
+    const total = homeData?.length || 0;
+    const occupied = homeData?.filter(r => !!r.tenetName).length || 0;
     const vacant = total - occupied;
-    const rate = Math.round((occupied / total) * 100);
-    return {occupied, vacant, rate, total};
+    const rate = total > 0 ? Math.round((occupied / total) * 100) : 0;
+    return {total, occupied, vacant, rate};
   }, [homeData]);
 
-  const progressRatio = useMemo(() => {
-    if (!occupancyStats.total) return 0;
-    return Math.min(1, Math.max(0, occupancyStats.occupied / occupancyStats.total));
-  }, [occupancyStats]);
-
   const pendingDuesStats = useMemo(() => {
-    if (!homeData || homeData.length === 0) {
-      return {totalPending: 0, unpaidCount: 0};
-    }
     let totalPending = 0;
-    let unpaidCount = 0;
-
-    homeData.forEach(room => {
-      if (room?.tenet?.records) {
-        room.tenet.records.forEach(rec => {
-          if (!rec.paidStatus) {
-            unpaidCount += 1;
-            const due = rec.pendingAmount !== undefined && rec.pendingAmount !== null
-              ? rec.pendingAmount
-              : Number(rec.totalAmount || 0) + Number(room.rent || 0);
-            totalPending += due;
-          }
-        });
+    homeData?.forEach(room => {
+      if (room?.tenet?.pendingAmount > 0) {
+        totalPending += room.tenet.pendingAmount;
       }
     });
-
-    return {totalPending, unpaidCount};
+    return {totalPending};
   }, [homeData]);
 
   const avgRentPerRoom = useMemo(() => {
@@ -128,18 +102,43 @@ const Home = props => {
     return Math.round(totalRent / homeData.length);
   }, [homeData, totalRent]);
 
-  const isNewUser = !homeData || homeData.length === 0;
+  const isNewUser = homeData.length === 0;
+
+  const rawRatio = occupancyStats.total > 0 ? occupancyStats.occupied / occupancyStats.total : 0;
+  const progressRatio = Math.min(1, Math.max(0, rawRatio));
+
+  const cardThemes = {
+    rooms: dark
+      ? {bg: '#1E293B', border: '#312E81', text: '#EEF2FF'}
+      : {bg: '#EEF2FF', border: '#C7D2FE', text: '#1E1B4B'},
+    rent: dark
+      ? {bg: '#1E293B', border: '#065F46', text: '#ECFDF5'}
+      : {bg: '#ECFDF5', border: '#A7F3D0', text: '#064E3B'},
+    elec: dark
+      ? {bg: '#1E293B', border: '#B45309', text: '#FEF3C7'}
+      : {bg: '#FFFBEB', border: '#FDE68A', text: '#78350F'},
+    revenue: dark
+      ? {bg: '#1E293B', border: '#6B21A8', text: '#F3E8FF'}
+      : {bg: '#F3E8FF', border: '#E9D5FF', text: '#4C1D95'},
+    lifetime: dark
+      ? {bg: '#1E293B', border: '#9F1239', text: '#FFE4E6'}
+      : {bg: '#FFF1F2', border: '#FECDD3', text: '#881337'},
+  };
 
   return (
     <Container>
       <Header
         back={false}
         title="Dashboard Overview"
-        subtitle="Property & Financial Summary"
+        subtitle="Property analytics, meter readings & rent collection"
+        right="flash"
+        rightText="Quick Setup"
+        rightIconPress={() => setQuickSetupVisible(true)}
       />
 
-      {loading && <Loader message="Analyzing property metrics..." />}
-      {!loading && (
+      {loading ? (
+        <Loader message="Fetching dashboard analytics..." />
+      ) : (
         <VirtualizedScrollView
           contentContainerStyle={{padding: 16, paddingBottom: 150}}
           refreshControl={
@@ -152,20 +151,20 @@ const Home = props => {
           {/* First Time User Onboarding Banner */}
           {isNewUser && (
             <LinearGradient
-              colors={['#EEF2FF', '#E0E7FF']}
+              colors={dark ? ['#1E1B4B', '#312E81'] : ['#EEF2FF', '#E0E7FF']}
               useAngle={true}
               angle={135}
               style={styles.ftueBanner}>
               <View style={{flexDirection: 'row', alignItems: 'center', marginBottom: 8}}>
-                <Icon source="home-city" size={26} color="#4F46E5" />
-                <Text style={styles.ftueTitle}>Welcome to myTenant!</Text>
+                <Icon source="home-city" size={26} color={dark ? '#818CF8' : '#4F46E5'} />
+                <Text style={[styles.ftueTitle, {color: dark ? '#FFFFFF' : '#0F172A'}]}>Welcome to myTenant!</Text>
               </View>
-              <Text style={styles.ftueSubtitle}>
+              <Text style={[styles.ftueSubtitle, {color: dark ? '#E0E7FF' : '#475569'}]}>
                 Manage rooms, tenant records, and monthly electricity bills effortlessly.
               </Text>
               <Button
                 mode="contained"
-                buttonColor="#4F46E5"
+                buttonColor={colors.primary}
                 textColor="#FFFFFF"
                 icon="plus-circle"
                 style={styles.ftueBtn}
@@ -235,80 +234,92 @@ const Home = props => {
 
           {/* Quick Action Shortcuts Bar */}
           <View style={styles.quickActionsContainer}>
-            <Text style={styles.sectionHeader}>Quick Actions</Text>
+            <Text style={[styles.sectionHeader, {color: colors.onSurface}]}>Quick Actions</Text>
             <View style={styles.quickActionRow}>
               <TouchableOpacity
                 activeOpacity={0.8}
-                style={[styles.quickActionBtn, styles.blueActionBtn]}
+                style={[
+                  styles.quickActionBtn,
+                  {
+                    backgroundColor: dark ? '#1E293B' : '#EFF6FF',
+                    borderColor: dark ? '#312E81' : '#BFDBFE',
+                  },
+                ]}
                 onPress={() => setQuickSetupVisible(true)}>
-                <View style={[styles.actionIconCircle, {backgroundColor: '#DBEAFE'}]}>
-                  <Icon source="home-plus" color="#2563EB" size={22} />
+                <View style={[styles.actionIconCircle, {backgroundColor: dark ? '#312E81' : '#DBEAFE'}]}>
+                  <Icon source="home-plus" color={colors.primary} size={22} />
                 </View>
-                <Text style={[styles.actionText, {color: '#1E40AF'}]}>Add Property</Text>
+                <Text style={[styles.actionText, {color: dark ? '#93C5FD' : '#1E40AF'}]}>Add Property</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 activeOpacity={0.8}
-                style={[styles.quickActionBtn, styles.greenActionBtn]}
+                style={[
+                  styles.quickActionBtn,
+                  {
+                    backgroundColor: dark ? '#1E293B' : '#ECFDF5',
+                    borderColor: dark ? '#065F46' : '#A7F3D0',
+                  },
+                ]}
                 onPress={() => setQuickReadingVisible(true)}>
-                <View style={[styles.actionIconCircle, {backgroundColor: '#D1FAE5'}]}>
-                  <Icon source="lightning-bolt" color="#059669" size={22} />
+                <View style={[styles.actionIconCircle, {backgroundColor: dark ? '#065F46' : '#D1FAE5'}]}>
+                  <Icon source="lightning-bolt" color="#10B981" size={22} />
                 </View>
-                <Text style={[styles.actionText, {color: '#065F46'}]}>Add Reading</Text>
+                <Text style={[styles.actionText, {color: dark ? '#6EE7B7' : '#065F46'}]}>Add Reading</Text>
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* Light-Themed Analytics Dashboard Cards */}
-          <Text style={styles.sectionHeader}>Overview & Revenue</Text>
+          {/* Analytics Dashboard Cards */}
+          <Text style={[styles.sectionHeader, {color: colors.onSurface}]}>Overview & Revenue</Text>
 
           <View style={styles.rowContainer}>
             {/* Total Rooms Card */}
-            <Surface style={[styles.lightCard, {backgroundColor: '#EEF2FF', borderColor: '#C7D2FE'}]}>
+            <Surface style={[styles.lightCard, {backgroundColor: cardThemes.rooms.bg, borderColor: cardThemes.rooms.border}]}>
               <View style={styles.cardHeader}>
                 <View style={[styles.cardIconBox, {backgroundColor: '#4F46E5'}]}>
                   <Icon source="home-city" size={20} color="#FFF" />
                 </View>
-                <Text style={styles.cardLabel}>Total Rooms</Text>
+                <Text style={[styles.cardLabel, {color: colors.onSurfaceVariant}]}>Total Rooms</Text>
               </View>
-              <Text style={[styles.cardValue, {color: '#1E1B4B'}]}>{homeData?.length || 0}</Text>
+              <Text style={[styles.cardValue, {color: cardThemes.rooms.text}]}>{homeData?.length || 0}</Text>
             </Surface>
 
             {/* Expected Rent Card */}
-            <Surface style={[styles.lightCard, {backgroundColor: '#ECFDF5', borderColor: '#A7F3D0'}]}>
+            <Surface style={[styles.lightCard, {backgroundColor: cardThemes.rent.bg, borderColor: cardThemes.rent.border}]}>
               <View style={styles.cardHeader}>
                 <View style={[styles.cardIconBox, {backgroundColor: '#059669'}]}>
                   <Icon source="account-group" size={20} color="#FFF" />
                 </View>
-                <Text style={styles.cardLabel}>Expected Rent</Text>
+                <Text style={[styles.cardLabel, {color: colors.onSurfaceVariant}]}>Expected Rent</Text>
               </View>
-              <Text style={[styles.cardValue, {color: '#064E3B'}]}>₹ {totalRent}</Text>
+              <Text style={[styles.cardValue, {color: cardThemes.rent.text}]}>₹ {totalRent}</Text>
             </Surface>
           </View>
 
           <View style={styles.rowContainer}>
             {/* Monthly Electricity Collection Card */}
-            <Surface style={[styles.lightCard, {backgroundColor: '#FFFBEB', borderColor: '#FDE68A'}]}>
+            <Surface style={[styles.lightCard, {backgroundColor: cardThemes.elec.bg, borderColor: cardThemes.elec.border}]}>
               <View style={styles.cardHeader}>
                 <View style={[styles.cardIconBox, {backgroundColor: '#D97706'}]}>
                   <Icon source="lightning-bolt" size={20} color="#FFF" />
                 </View>
-                <Text style={styles.cardLabel}>
+                <Text style={[styles.cardLabel, {color: colors.onSurfaceVariant}]}>
                   {moment().format('MMM')} Elec Collection
                 </Text>
               </View>
-              <Text style={[styles.cardValue, {color: '#78350F'}]}>₹ {totalElectcityRent}</Text>
+              <Text style={[styles.cardValue, {color: cardThemes.elec.text}]}>₹ {totalElectcityRent}</Text>
             </Surface>
 
             {/* Combined Revenue Card */}
-            <Surface style={[styles.lightCard, {backgroundColor: '#F3E8FF', borderColor: '#E9D5FF'}]}>
+            <Surface style={[styles.lightCard, {backgroundColor: cardThemes.revenue.bg, borderColor: cardThemes.revenue.border}]}>
               <View style={styles.cardHeader}>
                 <View style={[styles.cardIconBox, {backgroundColor: '#7C3AED'}]}>
                   <Icon source="cash-multiple" size={20} color="#FFF" />
                 </View>
-                <Text style={styles.cardLabel}>Combined Revenue</Text>
+                <Text style={[styles.cardLabel, {color: colors.onSurfaceVariant}]}>Combined Revenue</Text>
               </View>
-              <Text style={[styles.cardValue, {color: '#4C1D95'}]}>
+              <Text style={[styles.cardValue, {color: cardThemes.revenue.text}]}>
                 ₹ {totalElectcityRent + totalRent}
               </Text>
             </Surface>
@@ -316,13 +327,13 @@ const Home = props => {
 
           <View style={styles.fullRow}>
             {/* Total Lifetime Electricity Collected Card */}
-            <Surface style={[styles.fullLightCard, {backgroundColor: '#FFF1F2', borderColor: '#FECDD3'}]}>
+            <Surface style={[styles.fullLightCard, {backgroundColor: cardThemes.lifetime.bg, borderColor: cardThemes.lifetime.border}]}>
               <View style={[styles.cardIconBox, {backgroundColor: '#E11D48'}]}>
                 <Icon source="chart-line" size={22} color="#FFF" />
               </View>
               <View style={{marginLeft: 14, flex: 1}}>
-                <Text style={styles.cardLabel}>Lifetime Electricity Collected</Text>
-                <Text style={[styles.cardValue, {color: '#881337'}]}>₹ {totalElectcityRentTillToday}</Text>
+                <Text style={[styles.cardLabel, {color: colors.onSurfaceVariant}]}>Lifetime Electricity Collected</Text>
+                <Text style={[styles.cardValue, {color: cardThemes.lifetime.text}]}>₹ {totalElectcityRentTillToday}</Text>
               </View>
             </Surface>
           </View>
@@ -348,39 +359,37 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0F172A',
-    marginVertical: 10,
+    marginBottom: 12,
+    marginTop: 8,
   },
   ftueBanner: {
-    borderRadius: 16,
-    padding: 18,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
+    padding: 20,
+    borderRadius: 20,
+    marginBottom: 20,
+    elevation: 3,
   },
   ftueTitle: {
-    color: '#1E1B4B',
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '800',
-    marginLeft: 8,
+    marginLeft: 10,
   },
   ftueSubtitle: {
-    color: '#3730A3',
     fontSize: 13,
-    lineHeight: 18,
-    marginBottom: 14,
+    marginBottom: 16,
+    lineHeight: 19,
   },
   ftueBtn: {
-    borderRadius: 10,
+    borderRadius: 12,
+    paddingVertical: 4,
   },
   executiveCard: {
     borderRadius: 20,
     padding: 18,
-    marginBottom: 16,
+    marginBottom: 20,
     elevation: 4,
     shadowColor: '#4F46E5',
     shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.25,
     shadowRadius: 10,
   },
   execHeaderRow: {
@@ -392,7 +401,7 @@ const styles = StyleSheet.create({
   execBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -405,32 +414,31 @@ const styles = StyleSheet.create({
   },
   execRateText: {
     color: '#34D399',
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '800',
   },
   execMetricsGrid: {
     flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.12)',
     borderRadius: 14,
     padding: 12,
-    justifyContent: 'space-around',
-    alignItems: 'center',
     marginBottom: 14,
   },
   execMetricItem: {
-    alignItems: 'center',
     flex: 1,
+    alignItems: 'center',
   },
   execMetricLabel: {
     color: '#C7D2FE',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '500',
+    marginBottom: 2,
   },
   execMetricValue: {
     color: '#FFFFFF',
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '800',
-    marginTop: 2,
   },
   execMetricDivider: {
     width: 1,
@@ -446,7 +454,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   progressValue: {
-    color: '#34D399',
+    color: '#FFFFFF',
     fontSize: 11,
     fontWeight: '700',
   },
@@ -456,56 +464,54 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.2)',
   },
   quickActionsContainer: {
-    marginBottom: 10,
+    marginBottom: 18,
   },
   quickActionRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 12,
   },
   quickActionBtn: {
-    width: '48%',
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    paddingHorizontal: 12,
+    padding: 12,
     borderRadius: 14,
     borderWidth: 1,
   },
-  blueActionBtn: {
-    backgroundColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
-  },
-  greenActionBtn: {
-    backgroundColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
-  },
   actionIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
   },
   actionText: {
-    fontWeight: '700',
     fontSize: 13,
+    fontWeight: '700',
   },
   rowContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 6,
+    gap: 12,
+    marginBottom: 12,
   },
   lightCard: {
-    width: '48%',
+    flex: 1,
     borderRadius: 16,
     padding: 14,
     borderWidth: 1,
-    elevation: 1,
-    shadowColor: '#0F172A',
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
+    elevation: 2,
+  },
+  fullRow: {
+    marginBottom: 12,
+  },
+  fullLightCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 16,
+    padding: 14,
+    borderWidth: 1,
+    elevation: 2,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -513,34 +519,20 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   cardIconBox: {
-    width: 32,
-    height: 32,
+    width: 34,
+    height: 34,
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
   },
   cardLabel: {
-    color: '#475569',
-    fontWeight: '600',
     fontSize: 12,
+    fontWeight: '600',
     flex: 1,
   },
   cardValue: {
-    fontWeight: '800',
     fontSize: 20,
-  },
-  fullRow: {
-    marginVertical: 6,
-  },
-  fullLightCard: {
-    width: '100%',
-    borderRadius: 16,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    elevation: 1,
+    fontWeight: '800',
   },
 });

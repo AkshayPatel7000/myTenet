@@ -34,7 +34,7 @@ const TAB_CONFIG = {
 };
 
 function MyTabBar({state, descriptors, navigation}) {
-  const {colors} = useTheme();
+  const {colors, dark} = useTheme();
   const safeAreaInsets = useSafeAreaInsets();
   const [showTab, setShowTab] = useState(true);
   const [containerWidth, setContainerWidth] = useState(0);
@@ -78,7 +78,14 @@ function MyTabBar({state, descriptors, navigation}) {
 
   return (
     <View
-      style={[styles.tabBarContainer, {bottom: bottomMargin}]}
+      style={[
+        styles.tabBarContainer,
+        {
+          bottom: bottomMargin,
+          backgroundColor: colors.surface,
+          borderColor: colors.outlineVariant || (dark ? '#334155' : '#F1F5F9'),
+        },
+      ]}
       onLayout={e => setContainerWidth(e.nativeEvent.layout.width)}>
       
       {/* Animated Sliding Background Pill */}
@@ -88,6 +95,7 @@ function MyTabBar({state, descriptors, navigation}) {
             styles.slidingPill,
             {
               width: tabWidth,
+              backgroundColor: colors.primaryContainer || (dark ? '#312E81' : '#EEF2FF'),
               transform: [{translateX}],
             },
           ]}
@@ -114,6 +122,8 @@ function MyTabBar({state, descriptors, navigation}) {
           }
         };
 
+        const inactiveColor = dark ? '#94A3B8' : '#64748B';
+
         return (
           <TouchableOpacity
             key={route.key}
@@ -124,12 +134,12 @@ function MyTabBar({state, descriptors, navigation}) {
               <Icon
                 source={isFocused ? tabMeta.activeIcon : tabMeta.inactiveIcon}
                 size={22}
-                color={isFocused ? colors.primary : '#64748B'}
+                color={isFocused ? colors.primary : inactiveColor}
               />
               <Text
                 style={[
                   styles.tabLabel,
-                  {color: isFocused ? colors.primary : '#64748B'},
+                  {color: isFocused ? colors.primary : inactiveColor},
                   isFocused && styles.activeTabLabel,
                 ]}>
                 {tabMeta.label}
@@ -162,7 +172,6 @@ const styles = StyleSheet.create({
     left: 20,
     right: 20,
     height: 64,
-    backgroundColor: '#FFFFFF',
     borderRadius: 32,
     flexDirection: 'row',
     alignItems: 'center',
@@ -173,14 +182,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 12,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
   },
   slidingPill: {
     position: 'absolute',
     left: 8,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#EEF2FF',
   },
   tabItem: {
     flex: 1,

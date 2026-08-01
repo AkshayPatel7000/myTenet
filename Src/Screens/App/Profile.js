@@ -17,6 +17,7 @@ import {
   Icon,
   IconButton,
   Surface,
+  Switch,
   Text,
   TextInput,
   useTheme,
@@ -25,8 +26,10 @@ import LinearGradient from 'react-native-linear-gradient';
 import {useAppDispatch, useTypedSelector} from '../../Store/MainStore';
 import {
   resetAuthSlice,
+  selectIsDarkMode,
   selectUserProfile,
   setAuthToken,
+  setDarkMode,
 } from '../../Store/Slices/AuthSlice';
 import {LocalStorage} from '../../Utils/Resource/localStorage';
 import {Formik} from 'formik';
@@ -40,6 +43,7 @@ const Profile = () => {
   const {colors} = useTheme();
   const [visible, setVisible] = useState(false);
   const user = useTypedSelector(selectUserProfile);
+  const isDarkMode = useTypedSelector(selectIsDarkMode);
   const [loading, setLoading] = useState(false);
   const dispatch = useAppDispatch();
 
@@ -79,6 +83,11 @@ const Profile = () => {
     }
   };
 
+  const handleToggleTheme = async val => {
+    dispatch(setDarkMode(val));
+    await LocalStorage.setIsDarkTheme(val);
+  };
+
   const getInitials = (name = '') => {
     if (!name) return 'U';
     const parts = name.split(' ');
@@ -95,7 +104,6 @@ const Profile = () => {
         title="Landlord Profile"
         subtitle="Payment details & account preferences"
       />
-
 
       <MyDialog
         visible={visible}
@@ -225,6 +233,28 @@ const Profile = () => {
             </Formik>
           </Surface>
 
+          {/* App Appearance & Theme Switcher */}
+          <Surface style={styles.settingsCard}>
+            <Text style={styles.sectionTitle}>App Appearance</Text>
+            <View style={styles.settingRow}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <Icon
+                  source={isDarkMode ? 'weather-night' : 'white-balance-sunny'}
+                  size={22}
+                  color={colors.primary}
+                />
+                <Text style={styles.settingText}>
+                  {isDarkMode ? 'Dark Theme Mode' : 'Light Theme Mode'}
+                </Text>
+              </View>
+              <Switch
+                value={isDarkMode}
+                onValueChange={handleToggleTheme}
+                color={colors.primary}
+              />
+            </View>
+          </Surface>
+
           {/* Account Settings & App Info */}
           <Surface style={styles.settingsCard}>
             <Text style={styles.sectionTitle}>App Details</Text>
@@ -327,7 +357,6 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   formCard: {
-    backgroundColor: '#FFF',
     borderRadius: 16,
     padding: 18,
     marginBottom: 16,
@@ -336,10 +365,9 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0F172A',
   },
   input: {
-    backgroundColor: '#FFF',
+    backgroundColor: 'transparent',
   },
   saveBtn: {
     marginTop: 12,
@@ -347,10 +375,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   settingsCard: {
-    backgroundColor: '#FFF',
     borderRadius: 16,
     padding: 18,
-    marginBottom: 20,
+    marginBottom: 16,
     elevation: 2,
   },
   settingRow: {
@@ -358,12 +385,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
   },
   settingText: {
     fontSize: 14,
-    color: '#334155',
     marginLeft: 10,
     fontWeight: '500',
   },
@@ -380,5 +404,6 @@ const styles = StyleSheet.create({
   logoutBtn: {
     borderRadius: 12,
     paddingVertical: 4,
+    marginTop: 6,
   },
 });

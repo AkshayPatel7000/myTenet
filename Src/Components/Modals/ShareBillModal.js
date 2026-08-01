@@ -14,7 +14,7 @@ import ViewShot from 'react-native-view-shot';
 import Share from 'react-native-share';
 
 const ShareBillModal = ({visible, hideModal, billData, billImage}) => {
-  const {colors} = useTheme();
+  const {colors, dark} = useTheme();
   const viewShotRef = useRef();
 
   const finalPayable =
@@ -58,13 +58,22 @@ Thank you!`,
       <Modal
         visible={visible}
         onDismiss={hideModal}
-        contentContainerStyle={styles.sheetContainer}>
-        <View style={styles.sheetPill} />
+        contentContainerStyle={[
+          styles.sheetContainer,
+          {backgroundColor: colors.surface},
+        ]}>
+        <View
+          style={[
+            styles.sheetPill,
+            {backgroundColor: colors.outlineVariant || '#CBD5E1'},
+          ]}
+        />
 
         <View style={styles.headerRow}>
           <View style={styles.titleGroup}>
-            {/* <Icon source="receipt-text-outline" size={22} color={colors.primary} /> */}
-            <Text style={styles.modalTitleText}>Tenant Bill Receipt</Text>
+            <Text style={[styles.modalTitleText, {color: colors.onSurface}]}>
+              Tenant Bill Receipt
+            </Text>
           </View>
           <IconButton icon="close" size={20} onPress={hideModal} />
         </View>
@@ -76,7 +85,13 @@ Thank you!`,
           <ViewShot
             ref={viewShotRef}
             options={{format: 'png', quality: 0.95}}
-            style={styles.receiptCard}>
+            style={[
+              styles.receiptCard,
+              {
+                backgroundColor: colors.surface,
+                borderColor: colors.outlineVariant || '#E2E8F0',
+              },
+            ]}>
             {/* Header Banner */}
             <LinearGradient
               colors={['#4F46E5', '#6366F1']}
@@ -91,35 +106,62 @@ Thank you!`,
             </LinearGradient>
 
             {/* Hero Big Total Payable Amount */}
-            <View style={styles.heroAmountBox}>
-              <Text style={styles.heroAmountLabel}>TOTAL AMOUNT PAYABLE</Text>
-              <Text style={styles.heroAmountValue}>₹ {finalPayable}</Text>
+            <View
+              style={[
+                styles.heroAmountBox,
+                {
+                  backgroundColor: dark ? '#312E81' : '#EEF2FF',
+                  borderBottomColor: dark ? '#4338CA' : '#E0E7FF',
+                },
+              ]}>
+              <Text style={[styles.heroAmountLabel, {color: colors.primary}]}>
+                TOTAL AMOUNT PAYABLE
+              </Text>
+              <Text style={[styles.heroAmountValue, {color: dark ? '#EEF2FF' : '#1E1B4B'}]}>
+                ₹ {finalPayable}
+              </Text>
             </View>
 
             {/* Simple Breakdown List */}
             <View style={styles.breakdownBox}>
-              <View style={styles.lineItem}>
+              <View
+                style={[
+                  styles.lineItem,
+                  {borderBottomColor: colors.outlineVariant || '#F1F5F9'},
+                ]}>
                 <View style={styles.itemLabelGroup}>
-                  <Icon source="home-city" size={18} color="#4F46E5" />
-                  <Text style={styles.itemLabel}>Room Rent</Text>
+                  <Icon source="home-city" size={18} color={colors.primary} />
+                  <Text style={[styles.itemLabel, {color: colors.onSurface}]}>
+                    Room Rent
+                  </Text>
                 </View>
-                <Text style={styles.itemValue}>
+                <Text style={[styles.itemValue, {color: colors.onSurface}]}>
                   ₹ {billData?.roomRent || 0}
                 </Text>
               </View>
 
-              <View style={styles.lineItem}>
+              <View
+                style={[
+                  styles.lineItem,
+                  {borderBottomColor: colors.outlineVariant || '#F1F5F9'},
+                ]}>
                 <View style={styles.itemLabelGroup}>
-                  <Icon source="lightning-bolt" size={18} color="#4F46E5" />
-                  <Text style={styles.itemLabel}>
+                  <Icon source="lightning-bolt" size={18} color={colors.primary} />
+                  <Text style={[styles.itemLabel, {color: colors.onSurface}]}>
                     Electricity ({billData?.units || 0} units)
                   </Text>
                 </View>
-                <Text style={styles.itemValue}>₹ {billData?.eleBill || 0}</Text>
+                <Text style={[styles.itemValue, {color: colors.onSurface}]}>
+                  ₹ {billData?.eleBill || 0}
+                </Text>
               </View>
 
               {billData?.previousPendingAmount > 0 ? (
-                <View style={styles.lineItem}>
+                <View
+                  style={[
+                    styles.lineItem,
+                    {borderBottomColor: colors.outlineVariant || '#F1F5F9'},
+                  ]}>
                   <View style={styles.itemLabelGroup}>
                     <Icon source="alert-circle" size={18} color="#DC2626" />
                     <Text style={[styles.itemLabel, {color: '#DC2626'}]}>
@@ -134,20 +176,29 @@ Thank you!`,
             </View>
 
             {/* Simple Payment Instructions Box */}
-            <View style={styles.paymentBox}>
-              <Text style={styles.paymentBoxTitle}>Pay To Landlord:</Text>
+            <View
+              style={[
+                styles.paymentBox,
+                {
+                  backgroundColor: dark ? '#334155' : '#F8FAFC',
+                  borderColor: colors.outlineVariant || '#E2E8F0',
+                },
+              ]}>
+              <Text style={[styles.paymentBoxTitle, {color: colors.onSurfaceVariant}]}>
+                Pay To Landlord:
+              </Text>
 
               {billData?.upi ? (
                 <View style={styles.paymentRow}>
-                  <Text style={styles.payLabel}>UPI ID:</Text>
-                  <Text style={styles.payValue}>{billData?.upi}</Text>
+                  <Text style={[styles.payLabel, {color: colors.onSurfaceVariant}]}>UPI ID:</Text>
+                  <Text style={[styles.payValue, {color: colors.onSurface}]}>{billData?.upi}</Text>
                 </View>
               ) : null}
 
               {billData?.phone ? (
                 <View style={styles.paymentRow}>
-                  <Text style={styles.payLabel}>Mobile No:</Text>
-                  <Text style={styles.payValue}>{billData?.phone}</Text>
+                  <Text style={[styles.payLabel, {color: colors.onSurfaceVariant}]}>Mobile No:</Text>
+                  <Text style={[styles.payValue, {color: colors.onSurface}]}>{billData?.phone}</Text>
                 </View>
               ) : null}
             </View>
@@ -155,7 +206,9 @@ Thank you!`,
             {/* Meter Photo Thumbnail if available */}
             {billImage ? (
               <View style={styles.meterPhotoContainer}>
-                <Text style={styles.meterPhotoTitle}>Meter Reading Photo:</Text>
+                <Text style={[styles.meterPhotoTitle, {color: colors.onSurfaceVariant}]}>
+                  Meter Reading Photo:
+                </Text>
                 <Image source={{uri: billImage}} style={styles.meterPhoto} />
               </View>
             ) : null}
@@ -187,7 +240,6 @@ export default ShareBillModal;
 
 const styles = StyleSheet.create({
   sheetContainer: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderBottomLeftRadius: 0,
@@ -205,7 +257,6 @@ const styles = StyleSheet.create({
     width: 38,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#CBD5E1',
     alignSelf: 'center',
     marginBottom: 8,
   },
@@ -222,7 +273,6 @@ const styles = StyleSheet.create({
   modalTitleText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
     marginLeft: 8,
   },
   scrollContent: {
@@ -230,10 +280,8 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   receiptCard: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
     overflow: 'hidden',
     marginBottom: 16,
   },
@@ -261,22 +309,18 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   heroAmountBox: {
-    backgroundColor: '#EEF2FF',
     alignItems: 'center',
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#E0E7FF',
   },
   heroAmountLabel: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#4F46E5',
     letterSpacing: 1,
   },
   heroAmountValue: {
     fontSize: 32,
     fontWeight: '900',
-    color: '#1E1B4B',
     marginTop: 2,
   },
   breakdownBox: {
@@ -288,7 +332,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
   },
   itemLabelGroup: {
     flexDirection: 'row',
@@ -297,27 +340,22 @@ const styles = StyleSheet.create({
   itemLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#334155',
     marginLeft: 8,
   },
   itemValue: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#0F172A',
   },
   paymentBox: {
-    backgroundColor: '#F8FAFC',
     padding: 14,
     marginHorizontal: 16,
     marginBottom: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   paymentBoxTitle: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#475569',
     marginBottom: 6,
     textTransform: 'uppercase',
   },
@@ -328,13 +366,11 @@ const styles = StyleSheet.create({
   },
   payLabel: {
     fontSize: 13,
-    color: '#64748B',
     fontWeight: '500',
   },
   payValue: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#0F172A',
   },
   meterPhotoContainer: {
     paddingHorizontal: 16,
@@ -343,7 +379,6 @@ const styles = StyleSheet.create({
   meterPhotoTitle: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748B',
     marginBottom: 6,
   },
   meterPhoto: {

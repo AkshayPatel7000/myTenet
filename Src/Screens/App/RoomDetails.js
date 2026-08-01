@@ -47,7 +47,7 @@ const RoomDetails = ({navigation}) => {
   const [visibleTenet, setVisibleTenet] = useState({open: false, edit: {}});
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {colors} = useTheme();
+  const {colors, dark} = useTheme();
 
   useEffect(() => {
     const init = async () => {
@@ -111,7 +111,7 @@ const RoomDetails = ({navigation}) => {
         rightIconPress={() => setVisibleTenet({open: true, edit: {}})}
       />
 
-      {loading && <Loader />}
+      {loading && <Loader message="Loading tenant records..." />}
 
       <FlatList
         data={historicTenants}
@@ -127,38 +127,68 @@ const RoomDetails = ({navigation}) => {
         ListHeaderComponent={
           <>
             {/* Room Info Property Card */}
-            <Surface style={styles.roomInfoSurface}>
+            <Surface
+              style={[
+                styles.roomInfoSurface,
+                {backgroundColor: colors.surface},
+              ]}>
               <View style={styles.roomInfoHeader}>
                 <View style={styles.roomTitleGroup}>
                   <Icon source="home-city" size={22} color={colors.primary} />
-                  <Text style={styles.roomTitleText}>
+                  <Text
+                    style={[styles.roomTitleText, {color: colors.onSurface}]}>
                     {selectedRoom?.roomName} (Room No. {selectedRoom?.roomNo})
                   </Text>
                 </View>
                 <IconButton
                   icon="pencil-outline"
                   size={20}
-                  iconColor="#64748B"
+                  iconColor={colors.onSurfaceVariant}
                   onPress={() => setVisible(true)}
                 />
               </View>
 
-              <View style={styles.roomStatsRow}>
+              <View
+                style={[
+                  styles.roomStatsRow,
+                  {backgroundColor: dark ? '#334155' : '#F8FAFC'},
+                ]}>
                 <View style={styles.roomStatItem}>
-                  <Text style={styles.roomStatLabel}>Monthly Rent</Text>
-                  <Text style={styles.roomStatValue}>
+                  <Text
+                    style={[
+                      styles.roomStatLabel,
+                      {color: colors.onSurfaceVariant},
+                    ]}>
+                    Monthly Rent
+                  </Text>
+                  <Text
+                    style={[styles.roomStatValue, {color: colors.onSurface}]}>
                     ₹ {selectedRoom?.rent || 0}
                   </Text>
                 </View>
                 <View style={styles.roomStatItem}>
-                  <Text style={styles.roomStatLabel}>Rate / Unit</Text>
-                  <Text style={styles.roomStatValue}>
+                  <Text
+                    style={[
+                      styles.roomStatLabel,
+                      {color: colors.onSurfaceVariant},
+                    ]}>
+                    Rate / Unit
+                  </Text>
+                  <Text
+                    style={[styles.roomStatValue, {color: colors.onSurface}]}>
                     ₹ {selectedRoom?.perUnit || 10}
                   </Text>
                 </View>
                 <View style={styles.roomStatItem}>
-                  <Text style={styles.roomStatLabel}>Start Reading</Text>
-                  <Text style={styles.roomStatValue}>
+                  <Text
+                    style={[
+                      styles.roomStatLabel,
+                      {color: colors.onSurfaceVariant},
+                    ]}>
+                    Start Reading
+                  </Text>
+                  <Text
+                    style={[styles.roomStatValue, {color: colors.onSurface}]}>
                     {selectedRoom?.startReading || 0}
                   </Text>
                 </View>
@@ -319,10 +349,27 @@ const RoomDetails = ({navigation}) => {
                 </Button>
               </LinearGradient>
             ) : (
-              <Surface style={styles.vacantHeroSurface}>
-                <Icon source="home-alert" size={32} color="#D97706" />
-                <Text style={styles.vacantHeroTitle}>Room is Vacant</Text>
-                <Text style={styles.vacantHeroSubtitle}>
+              <Surface
+                style={[
+                  styles.vacantHeroSurface,
+                  {
+                    backgroundColor: dark ? '#78350F' : '#FEF3C7',
+                    borderColor: dark ? '#92400E' : '#FDE68A',
+                  },
+                ]}>
+                <Icon source="home-alert" size={32} color={dark ? '#FDE68A' : '#D97706'} />
+                <Text
+                  style={[
+                    styles.vacantHeroTitle,
+                    {color: dark ? '#FDE68A' : '#B45309'},
+                  ]}>
+                  Room is Vacant
+                </Text>
+                <Text
+                  style={[
+                    styles.vacantHeroSubtitle,
+                    {color: dark ? '#FEF3C7' : '#92400E'},
+                  ]}>
                   No active tenant is currently assigned to this room. Tap "Add
                   Tenant" above to register a new tenant.
                 </Text>
@@ -339,7 +386,11 @@ const RoomDetails = ({navigation}) => {
             {/* History Section Header */}
             {historicTenants.length > 0 ? (
               <View style={styles.historySectionHeader}>
-                <Text style={styles.historySectionTitle}>
+                <Text
+                  style={[
+                    styles.historySectionTitle,
+                    {color: colors.onSurface},
+                  ]}>
                   Tenancy History ({historicTenants.length})
                 </Text>
               </View>
@@ -393,7 +444,6 @@ export default RoomDetails;
 
 const styles = StyleSheet.create({
   roomInfoSurface: {
-    backgroundColor: '#FFF',
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -417,12 +467,10 @@ const styles = StyleSheet.create({
   roomTitleText: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#0F172A',
     marginLeft: 8,
   },
   roomStatsRow: {
     flexDirection: 'row',
-    backgroundColor: '#F8FAFC',
     borderRadius: 12,
     padding: 12,
     justifyContent: 'space-between',
@@ -433,14 +481,12 @@ const styles = StyleSheet.create({
   },
   roomStatLabel: {
     fontSize: 11,
-    color: '#64748B',
     fontWeight: '500',
     marginBottom: 2,
   },
   roomStatValue: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#0F172A',
   },
   activeTenantGradientCard: {
     borderRadius: 20,
@@ -600,23 +646,19 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   vacantHeroSurface: {
-    backgroundColor: '#FEF3C7',
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#FDE68A',
   },
   vacantHeroTitle: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#B45309',
     marginTop: 8,
   },
   vacantHeroSubtitle: {
     fontSize: 13,
-    color: '#92400E',
     textAlign: 'center',
     marginTop: 4,
     lineHeight: 18,
@@ -628,6 +670,5 @@ const styles = StyleSheet.create({
   historySectionTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0F172A',
   },
 });

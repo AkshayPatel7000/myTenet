@@ -26,12 +26,10 @@ import {LocalStorage} from '../../Utils/Resource/localStorage';
 import {showError, toTitleCase} from '../../Utils/helperFunction';
 import auth from '@react-native-firebase/auth';
 import {addUser, getUser} from '../../Services/Collections';
-import VirtualizedScrollView from '../../Components/VirtualisedScroll';
-import RoutesName from '../../Utils/Resource/RoutesName';
+import KeyboardAwareScrollView from '../../Components/KeyboardAwareScrollView';
 import GoogleLogo from '../../Assets/SVG/google-icon.svg';
-import {
-  GoogleSignin,
-} from '@react-native-google-signin/google-signin';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {GoogleSignin} from '@react-native-google-signin/google-signin';
 
 GoogleSignin.configure({
   webClientId:
@@ -39,9 +37,10 @@ GoogleSignin.configure({
 });
 
 const Login = ({navigation}) => {
-  const {colors} = useTheme();
+  const {colors, dark} = useTheme();
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const safeAreaInsets = useSafeAreaInsets();
 
   const validationSchema = Yup.object().shape({
     email: Yup.string()
@@ -72,7 +71,11 @@ const Login = ({navigation}) => {
         showError('That email address is already in use!');
       } else if (error.code === 'auth/invalid-email') {
         showError('Invalid email address format.');
-      } else if (error.code === 'auth/invalid-credential' || error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+      } else if (
+        error.code === 'auth/invalid-credential' ||
+        error.code === 'auth/user-not-found' ||
+        error.code === 'auth/wrong-password'
+      ) {
         showError('Invalid email or password credentials.');
       } else {
         showError('Login failed. Please check your network and credentials.');
@@ -106,134 +109,161 @@ const Login = ({navigation}) => {
     }
   };
 
+  const topPadding = safeAreaInsets.top > 0 ? safeAreaInsets.top + 20 : 40;
+
   return (
-    <Container
-      statusColor="#6366F1"
-      statusContent="light-content"
-      containerStyle={{backgroundColor: '#6366F1'}}>
-      <KeyboardAvoidingView
-        style={{flex: 1}}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <VirtualizedScrollView contentContainerStyle={styles.scrollContent}>
-          {/* Hero Gradient Brand Card */}
-          <LinearGradient
-            colors={['#6366F1', '#4F46E5']}
-            useAngle={true}
-            angle={135}
-            style={styles.heroBanner}>
-            <View style={styles.brandBadge}>
-              <Icon source="home-city" size={32} color="#FFF" />
+    <Container statusContent="light-content">
+      <LinearGradient
+        colors={dark ? ['#0F172A', '#1E1B4B', '#0F172A'] : ['#3730A3', '#4F46E5', '#6366F1']}
+        useAngle={true}
+        angle={145}
+        style={styles.fullGradientBackground}>
+
+        {/* Ambient Glow Circles */}
+        <View style={styles.ambientGlowTop} />
+        <View style={styles.ambientGlowBottom} />
+
+        <KeyboardAvoidingView
+          style={{flex: 1}}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <KeyboardAwareScrollView contentContainerStyle={[styles.scrollContent, {paddingTop: topPadding}]}>
+
+            {/* Brand Header */}
+            <View style={styles.brandContainer}>
+              <View style={styles.brandBadgeCircle}>
+                <Icon source="home-city" size={34} color="#818CF8" />
+              </View>
+              <Text style={styles.brandTitle}>myTenet</Text>
+              <Text style={styles.brandSubtitle}>
+                Smart Rental Property & Utility Manager
+              </Text>
             </View>
-            <Text style={styles.brandTitle}>myTenet</Text>
-            <Text style={styles.brandSubtitle}>
-              Smart Rental Property & Utility Manager
-            </Text>
-          </LinearGradient>
 
-          {/* Form Surface Container */}
-          <Surface style={styles.formSurface}>
-            <View style={styles.welcomeHeaderRow}>
-              <Icon source="hand-wave" size={24} color="#4F46E5" />
-              <Text style={styles.welcomeTitle}>Welcome Back</Text>
-            </View>
-            <Text style={styles.welcomeSubtitle}>
-              Sign in to manage rooms, tenant records, and monthly billing.
-            </Text>
+            {/* Main Form Card Surface */}
+            <Surface
+              style={[
+                styles.formCardSurface,
+                {
+                  backgroundColor: colors.surface,
+                  borderColor: colors.outlineVariant || (dark ? '#334155' : '#E2E8F0'),
+                },
+              ]}>
+              <View style={styles.cardTitleRow}>
+                <View style={styles.iconBox}>
+                  <Icon source="lock-open-outline" size={20} color={colors.primary} />
+                </View>
+                <View style={{marginLeft: 10}}>
+                  <Text style={[styles.cardTitle, {color: colors.onSurface}]}>
+                    Welcome Back
+                  </Text>
+                  <Text style={[styles.cardSubTitle, {color: colors.onSurfaceVariant}]}>
+                    Sign in to access your property dashboard
+                  </Text>
+                </View>
+              </View>
 
-            <Formik
-              initialValues={{email: '', password: ''}}
-              onSubmit={_onLoginPressed}
-              validationSchema={validationSchema}>
-              {({handleChange, handleBlur, handleSubmit, values, errors}) => {
-                return (
-                  <View style={styles.formGroup}>
-                    <TextInput
-                      mode="outlined"
-                      label="Email Address"
-                      left={<TextInput.Icon icon="email-outline" />}
-                      returnKeyType="next"
-                      value={values.email}
-                      onChangeText={handleChange('email')}
-                      onBlur={handleBlur('email')}
-                      error={!!errors.email}
-                      autoCapitalize="none"
-                      keyboardType="email-address"
-                      style={styles.input}
-                    />
-                    <HelperText type="error" visible={!!errors.email}>
-                      {errors.email ? toTitleCase(errors.email) : ''}
-                    </HelperText>
+              <Formik
+                initialValues={{email: '', password: ''}}
+                onSubmit={_onLoginPressed}
+                validationSchema={validationSchema}>
+                {({handleChange, handleBlur, handleSubmit, values, errors}) => {
+                  return (
+                    <View style={styles.formGroup}>
+                      <TextInput
+                        mode="outlined"
+                        label="Email Address"
+                        left={<TextInput.Icon icon="email-outline" />}
+                        returnKeyType="next"
+                        value={values.email}
+                        onChangeText={handleChange('email')}
+                        onBlur={handleBlur('email')}
+                        error={!!errors.email}
+                        autoCapitalize="none"
+                        keyboardType="email-address"
+                        style={styles.input}
+                      />
+                      <HelperText type="error" visible={!!errors.email}>
+                        {errors.email ? toTitleCase(errors.email) : ''}
+                      </HelperText>
 
-                    <TextInput
-                      mode="outlined"
-                      label="Password"
-                      left={<TextInput.Icon icon="lock-outline" />}
-                      right={
-                        <TextInput.Icon
-                          icon={showPassword ? 'eye-off' : 'eye'}
-                          onPress={() => setShowPassword(prev => !prev)}
-                        />
-                      }
-                      returnKeyType="done"
-                      value={values.password}
-                      onChangeText={handleChange('password')}
-                      onBlur={handleBlur('password')}
-                      error={!!errors.password}
-                      secureTextEntry={!showPassword}
-                      style={styles.input}
-                    />
-                    <HelperText type="error" visible={!!errors.password}>
-                      {errors.password ? toTitleCase(errors.password) : ''}
-                    </HelperText>
+                      <TextInput
+                        mode="outlined"
+                        label="Password"
+                        left={<TextInput.Icon icon="lock-outline" />}
+                        right={
+                          <TextInput.Icon
+                            icon={showPassword ? 'eye-off' : 'eye'}
+                            onPress={() => setShowPassword(prev => !prev)}
+                          />
+                        }
+                        returnKeyType="done"
+                        value={values.password}
+                        onChangeText={handleChange('password')}
+                        onBlur={handleBlur('password')}
+                        error={!!errors.password}
+                        secureTextEntry={!showPassword}
+                        style={styles.input}
+                      />
+                      <HelperText type="error" visible={!!errors.password}>
+                        {errors.password ? toTitleCase(errors.password) : ''}
+                      </HelperText>
 
-                    <TouchableOpacity
-                      style={styles.forgotPasswordBox}
-                      onPress={() => navigation.navigate('ForgotPasswordScreen')}>
-                      <Text style={styles.forgotPasswordText}>
-                        Forgot Password?
-                      </Text>
-                    </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.forgotPasswordBtn}
+                        onPress={() => navigation.navigate('ForgotPasswordScreen')}>
+                        <Text style={[styles.forgotPasswordText, {color: colors.primary}]}>
+                          Forgot Password?
+                        </Text>
+                      </TouchableOpacity>
 
-                    <Button
-                      mode="contained"
-                      icon="login"
-                      style={styles.loginBtn}
-                      labelStyle={{fontWeight: '700', fontSize: 15}}
-                      onPress={handleSubmit}
-                      loading={loading}
-                      disabled={loading}>
-                      Sign In to Account
-                    </Button>
+                      <Button
+                        mode="contained"
+                        icon="arrow-right"
+                        contentStyle={{flexDirection: 'row-reverse'}}
+                        style={styles.loginBtn}
+                        labelStyle={styles.loginBtnLabel}
+                        onPress={handleSubmit}
+                        loading={loading}
+                        disabled={loading}>
+                        Sign In to Account
+                      </Button>
 
-                    <View style={styles.dividerRow}>
-                      <View style={styles.dividerLine} />
-                      <Text style={styles.dividerText}>OR SIGN IN WITH</Text>
-                      <View style={styles.dividerLine} />
+                      <View style={styles.dividerRow}>
+                        <View style={[styles.dividerLine, {backgroundColor: colors.outlineVariant || '#E2E8F0'}]} />
+                        <Text style={[styles.dividerText, {color: colors.onSurfaceVariant}]}>OR CONTINUE WITH</Text>
+                        <View style={[styles.dividerLine, {backgroundColor: colors.outlineVariant || '#E2E8F0'}]} />
+                      </View>
+
+                      <TouchableOpacity
+                        activeOpacity={0.85}
+                        disabled={loading}
+                        onPress={_onGoogleLoginPress}
+                        style={[
+                          styles.googleBtn,
+                          {
+                            backgroundColor: dark ? '#334155' : '#F8FAFC',
+                            borderColor: colors.outlineVariant || '#E2E8F0',
+                          },
+                        ]}>
+                        {!loading ? (
+                          <>
+                            <GoogleLogo width={22} height={22} />
+                            <Text style={[styles.googleBtnText, {color: colors.onSurface}]}>
+                              Sign in with Google
+                            </Text>
+                          </>
+                        ) : (
+                          <ActivityIndicator size="small" color={colors.primary} />
+                        )}
+                      </TouchableOpacity>
                     </View>
-
-                    <TouchableOpacity
-                      activeOpacity={0.85}
-                      disabled={loading}
-                      onPress={_onGoogleLoginPress}
-                      style={styles.googleBtn}>
-                      {!loading ? (
-                        <>
-                          <GoogleLogo width={22} height={22} />
-                          <Text style={styles.googleBtnText}>
-                            Continue with Google
-                          </Text>
-                        </>
-                      ) : (
-                        <ActivityIndicator size="small" color="#4F46E5" />
-                      )}
-                    </TouchableOpacity>
-                  </View>
-                );
-              }}
-            </Formik>
-          </Surface>
-        </VirtualizedScrollView>
-      </KeyboardAvoidingView>
+                  );
+                }}
+              </Formik>
+            </Surface>
+          </KeyboardAwareScrollView>
+        </KeyboardAvoidingView>
+      </LinearGradient>
     </Container>
   );
 };
@@ -241,88 +271,117 @@ const Login = ({navigation}) => {
 export default Login;
 
 const styles = StyleSheet.create({
+  fullGradientBackground: {
+    flex: 1,
+  },
+  ambientGlowTop: {
+    position: 'absolute',
+    top: -80,
+    right: -80,
+    width: 260,
+    height: 260,
+    borderRadius: 130,
+    backgroundColor: 'rgba(129, 140, 248, 0.15)',
+  },
+  ambientGlowBottom: {
+    position: 'absolute',
+    bottom: -100,
+    left: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: 'rgba(99, 102, 241, 0.12)',
+  },
   scrollContent: {
-    paddingBottom: 40,
+    paddingHorizontal: 20,
+    paddingBottom: 60,
     flexGrow: 1,
+    justifyContent: 'center',
   },
-  heroBanner: {
-    paddingTop: 45,
-    paddingBottom: 50,
-    paddingHorizontal: 24,
+  brandContainer: {
     alignItems: 'center',
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+    marginBottom: 24,
   },
-  brandBadge: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+  brandBadgeCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
   },
   brandTitle: {
-    fontSize: 28,
+    fontSize: 32,
     fontWeight: '900',
     color: '#FFFFFF',
-    letterSpacing: 0.5,
+    letterSpacing: 0.8,
   },
   brandSubtitle: {
     fontSize: 13,
     color: '#E0E7FF',
     fontWeight: '600',
-    marginTop: 2,
+    marginTop: 4,
+    letterSpacing: 0.2,
   },
-  formSurface: {
-    backgroundColor: '#FFFFFF',
-    marginHorizontal: 18,
-    marginTop: -30,
+  formCardSurface: {
     borderRadius: 24,
     padding: 22,
-    elevation: 6,
+    elevation: 8,
     shadowColor: '#0F172A',
-    shadowOffset: {width: 0, height: 4},
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
+    shadowOffset: {width: 0, height: 6},
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    borderWidth: 1,
   },
-  welcomeHeaderRow: {
+  cardTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginBottom: 16,
   },
-  welcomeTitle: {
-    fontSize: 22,
+  iconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#EEF2FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cardTitle: {
+    fontSize: 20,
     fontWeight: '800',
-    color: '#0F172A',
-    marginLeft: 8,
   },
-  welcomeSubtitle: {
-    fontSize: 13,
-    color: '#64748B',
-    marginTop: 4,
-    marginBottom: 18,
-    lineHeight: 18,
+  cardSubTitle: {
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 1,
   },
   formGroup: {
     marginTop: 4,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'transparent',
   },
-  forgotPasswordBox: {
+  forgotPasswordBtn: {
     alignSelf: 'flex-end',
-    marginBottom: 18,
+    marginBottom: 16,
     marginTop: -4,
   },
   forgotPasswordText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#4F46E5',
   },
   loginBtn: {
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 4,
     marginBottom: 16,
+    elevation: 3,
+  },
+  loginBtnLabel: {
+    fontWeight: '800',
+    fontSize: 15,
   },
   dividerRow: {
     flexDirection: 'row',
@@ -332,29 +391,24 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E2E8F0',
   },
   dividerText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#94A3B8',
+    fontSize: 10,
+    fontWeight: '800',
     marginHorizontal: 10,
     letterSpacing: 0.8,
   },
   googleBtn: {
-    backgroundColor: '#F8FAFC',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   googleBtnText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#1E293B',
     marginLeft: 12,
   },
 });

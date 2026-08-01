@@ -22,7 +22,6 @@ import * as Yup from 'yup';
 import KeyboardAwareScrollView from '../KeyboardAwareScrollView';
 
 const UnifiedQuickSetupModal = ({visible, hideModal}) => {
-
   const {colors} = useTheme();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -84,8 +83,16 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
       <Modal
         visible={visible}
         onDismiss={handleClose}
-        contentContainerStyle={styles.sheetContainer}>
-        <View style={styles.sheetPill} />
+        contentContainerStyle={[
+          styles.sheetContainer,
+          {backgroundColor: colors.surface},
+        ]}>
+        <View
+          style={[
+            styles.sheetPill,
+            {backgroundColor: colors.outlineVariant || '#CBD5E1'},
+          ]}
+        />
 
         <KeyboardAvoidingView
           style={{flex: 1}}
@@ -94,15 +101,15 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
             <View style={styles.titleRow}>
               <Icon source="flash" size={24} color={colors.primary} />
               <View style={{marginLeft: 8}}>
-                <Text style={styles.heading}>Quick Property Setup</Text>
-                <Text style={styles.subHeading}>Step {step} of 3</Text>
+                <Text style={[styles.heading, {color: colors.onSurface}]}>Quick Property Setup</Text>
+                <Text style={[styles.subHeading, {color: colors.onSurfaceVariant}]}>Step {step} of 3</Text>
               </View>
             </View>
             <IconButton icon="close" onPress={handleClose} size={22} />
           </View>
 
           {/* Progress Bar */}
-          <View style={styles.progressContainer}>
+          <View style={[styles.progressContainer, {backgroundColor: colors.outlineVariant || '#E2E8F0'}]}>
             <View
               style={[
                 styles.progressBar,
@@ -152,7 +159,7 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
                     <View style={styles.stepContent}>
                       <View style={styles.stepHeader}>
                         <Icon source="home-city" size={20} color={colors.primary} />
-                        <Text style={styles.stepTitle}>Step 1: Room & Rent Details</Text>
+                        <Text style={[styles.stepTitle, {color: colors.onSurface}]}>Step 1: Room & Rent Details</Text>
                       </View>
 
                       <TextInput
@@ -162,7 +169,6 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
                         onBlur={handleBlur('roomName')}
                         value={values.roomName}
                         error={!!errors.roomName}
-                        style={styles.input}
                       />
                       <HelperText type="error" visible={!!errors.roomName}>
                         {errors.roomName}
@@ -178,7 +184,6 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
                             onBlur={handleBlur('roomNo')}
                             value={values.roomNo}
                             error={!!errors.roomNo}
-                            style={styles.input}
                           />
                           <HelperText type="error" visible={!!errors.roomNo}>
                             {errors.roomNo}
@@ -193,7 +198,6 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
                             onBlur={handleBlur('rent')}
                             value={values.rent}
                             error={!!errors.rent}
-                            style={styles.input}
                           />
                           <HelperText type="error" visible={!!errors.rent}>
                             {errors.rent}
@@ -208,7 +212,6 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
                         onChangeText={handleChange('advance')}
                         onBlur={handleBlur('advance')}
                         value={values.advance}
-                        style={styles.input}
                       />
 
                       <Button
@@ -226,7 +229,7 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
                     <View style={styles.stepContent}>
                       <View style={styles.stepHeader}>
                         <Icon source="account-plus" size={20} color={colors.primary} />
-                        <Text style={styles.stepTitle}>Step 2: Tenant Details</Text>
+                        <Text style={[styles.stepTitle, {color: colors.onSurface}]}>Step 2: Tenant Details</Text>
                       </View>
 
                       <TextInput
@@ -236,7 +239,6 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
                         onBlur={handleBlur('tenantName')}
                         value={values.tenantName}
                         error={!!errors.tenantName}
-                        style={styles.input}
                       />
                       <HelperText type="error" visible={!!errors.tenantName}>
                         {errors.tenantName}
@@ -250,7 +252,6 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
                         onBlur={handleBlur('tenantPhone')}
                         value={values.tenantPhone}
                         error={!!errors.tenantPhone}
-                        style={styles.input}
                       />
                       <HelperText type="error" visible={!!errors.tenantPhone}>
                         {errors.tenantPhone}
@@ -263,7 +264,6 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
                         onChangeText={handleChange('aadharNo')}
                         onBlur={handleBlur('aadharNo')}
                         value={values.aadharNo}
-                        style={styles.input}
                       />
 
                       <View style={styles.btnRow}>
@@ -290,7 +290,7 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
                     <View style={styles.stepContent}>
                       <View style={styles.stepHeader}>
                         <Icon source="lightning-bolt" size={20} color={colors.primary} />
-                        <Text style={styles.stepTitle}>Step 3: Initial Meter Reading</Text>
+                        <Text style={[styles.stepTitle, {color: colors.onSurface}]}>Step 3: Initial Meter Reading</Text>
                       </View>
 
                       <TextInput
@@ -301,7 +301,6 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
                         onBlur={handleBlur('startReading')}
                         value={values.startReading}
                         error={!!errors.startReading}
-                        style={styles.input}
                       />
                       <HelperText type="error" visible={!!errors.startReading}>
                         {errors.startReading}
@@ -315,7 +314,6 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
                         onBlur={handleBlur('perUnit')}
                         value={values.perUnit}
                         error={!!errors.perUnit}
-                        style={styles.input}
                       />
                       <HelperText type="error" visible={!!errors.perUnit}>
                         {errors.perUnit}
@@ -342,7 +340,6 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
                     </View>
                   )}
                 </KeyboardAwareScrollView>
-
               );
             }}
           </Formik>
@@ -356,7 +353,6 @@ export default UnifiedQuickSetupModal;
 
 const styles = StyleSheet.create({
   sheetContainer: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderBottomLeftRadius: 0,
@@ -374,7 +370,6 @@ const styles = StyleSheet.create({
     width: 38,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#CBD5E1',
     alignSelf: 'center',
     marginBottom: 10,
   },
@@ -390,17 +385,14 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 18,
-    color: '#0F172A',
     fontWeight: '700',
   },
   subHeading: {
     fontSize: 12,
-    color: '#64748B',
     marginTop: 1,
   },
   progressContainer: {
     height: 4,
-    backgroundColor: '#E2E8F0',
     borderRadius: 2,
     marginBottom: 14,
     overflow: 'hidden',
@@ -423,11 +415,7 @@ const styles = StyleSheet.create({
   stepTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#334155',
     marginLeft: 6,
-  },
-  input: {
-    backgroundColor: '#FFF',
   },
   row: {
     flexDirection: 'row',

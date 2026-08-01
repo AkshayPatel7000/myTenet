@@ -6,7 +6,7 @@ import {Icon, Surface, Text, useTheme} from 'react-native-paper';
 import {onOpenDialer} from '../../Utils/helperFunction';
 
 const TenetDetailCard = ({item, deleteRoomTenet, onPress}) => {
-  const {colors} = useTheme();
+  const {colors, dark} = useTheme();
 
   const getInitials = (name = '') => {
     if (!name) return 'T';
@@ -17,20 +17,22 @@ const TenetDetailCard = ({item, deleteRoomTenet, onPress}) => {
 
   return (
     <AppleStyleSwipeableRow
-      style={styles.swipeableRow}
+      style={[styles.swipeableRow, {backgroundColor: colors.surface}]}
       onSwipe={() => deleteRoomTenet(item)}>
       <TouchableOpacity
         activeOpacity={0.9}
         onPress={() => onPress(item)}>
-        <Surface style={styles.cardSurface}>
+        <Surface style={[styles.cardSurface, {backgroundColor: colors.surface}]}>
           <View style={styles.cardHeader}>
             <View style={styles.tenantIdentity}>
-              <View style={styles.avatarCircle}>
-                <Text style={styles.avatarText}>{getInitials(item?.name)}</Text>
+              <View style={[styles.avatarCircle, {backgroundColor: dark ? '#334155' : '#F1F5F9'}]}>
+                <Text style={[styles.avatarText, {color: colors.onSurface}]}>{getInitials(item?.name)}</Text>
               </View>
               <View style={{flex: 1}}>
-                <Text style={styles.tenantName}>{item?.name || 'Previous Tenant'}</Text>
-                <Text style={styles.tenantMeta}>
+                <Text style={[styles.tenantName, {color: colors.onSurface}]}>
+                  {item?.name || 'Previous Tenant'}
+                </Text>
+                <Text style={[styles.tenantMeta, {color: colors.onSurfaceVariant}]}>
                   {item?.startDate
                     ? `Occupied: ${moment(item?.startDate, 'DD-MMMM-YYYY').format('MMM YYYY')}`
                     : 'Historic Record'}
@@ -38,24 +40,26 @@ const TenetDetailCard = ({item, deleteRoomTenet, onPress}) => {
               </View>
             </View>
 
-            <View style={styles.historyBadge}>
-              <Text style={styles.historyBadgeText}>Past Tenant</Text>
+            <View style={[styles.historyBadge, {backgroundColor: dark ? '#334155' : '#F1F5F9'}]}>
+              <Text style={[styles.historyBadgeText, {color: colors.onSurfaceVariant}]}>
+                Past Tenant
+              </Text>
             </View>
           </View>
 
-          <View style={styles.divider} />
+          <View style={[styles.divider, {backgroundColor: colors.outlineVariant || '#F1F5F9'}]} />
 
           <View style={styles.infoRow}>
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Last Bill Paid</Text>
-              <Text style={styles.infoValue}>
+              <Text style={[styles.infoLabel, {color: colors.onSurfaceVariant}]}>Last Bill Paid</Text>
+              <Text style={[styles.infoValue, {color: colors.onSurface}]}>
                 ₹ {item?.lastPaidAmount || '0'}
               </Text>
             </View>
 
             <View style={styles.infoItem}>
-              <Text style={styles.infoLabel}>Paid Month</Text>
-              <Text style={styles.infoValue}>
+              <Text style={[styles.infoLabel, {color: colors.onSurfaceVariant}]}>Paid Month</Text>
+              <Text style={[styles.infoValue, {color: colors.onSurface}]}>
                 {item?.lastPaidDate
                   ? moment(item?.lastPaidDate).format('MMM YYYY')
                   : '-'}
@@ -64,7 +68,7 @@ const TenetDetailCard = ({item, deleteRoomTenet, onPress}) => {
 
             {item?.phone ? (
               <TouchableOpacity
-                style={styles.callBtn}
+                style={[styles.callBtn, {backgroundColor: dark ? '#312E81' : '#EEF2FF'}]}
                 onPress={() => onOpenDialer(item?.phone)}>
                 <Icon source="phone" size={16} color={colors.primary} />
               </TouchableOpacity>
@@ -80,13 +84,11 @@ export default TenetDetailCard;
 
 const styles = StyleSheet.create({
   swipeableRow: {
-    backgroundColor: '#FFF',
     borderRadius: 14,
     overflow: 'hidden',
     marginBottom: 12,
   },
   cardSurface: {
-    backgroundColor: '#FFFFFF',
     borderRadius: 14,
     padding: 14,
     borderLeftWidth: 4,
@@ -111,7 +113,6 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: '#F1F5F9',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 10,
@@ -119,21 +120,17 @@ const styles = StyleSheet.create({
   avatarText: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#475569',
   },
   tenantName: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0F172A',
     textTransform: 'capitalize',
   },
   tenantMeta: {
     fontSize: 12,
-    color: '#64748B',
     marginTop: 1,
   },
   historyBadge: {
-    backgroundColor: '#F1F5F9',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 12,
@@ -141,11 +138,9 @@ const styles = StyleSheet.create({
   historyBadgeText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#64748B',
   },
   divider: {
     height: 1,
-    backgroundColor: '#F1F5F9',
     marginVertical: 10,
   },
   infoRow: {
@@ -158,17 +153,14 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 11,
-    color: '#64748B',
     fontWeight: '500',
   },
   infoValue: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1E293B',
     marginTop: 1,
   },
   callBtn: {
-    backgroundColor: '#EEF2FF',
     padding: 8,
     borderRadius: 20,
     marginLeft: 10,

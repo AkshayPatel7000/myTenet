@@ -1,40 +1,49 @@
 import React from 'react';
-import {SafeAreaView, StatusBar, StyleSheet, View} from 'react-native';
+import {StatusBar, StyleSheet, View} from 'react-native';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useTheme} from 'react-native-paper';
 
 const Container = ({
   contentContainerStyle = {},
   containerStyle = {},
-  statusColor = '#FFFFFF',
-  statusContent = 'dark-content',
+  statusContent,
+  useSafeAreaTop = false,
   children,
 }) => {
+  const {colors, dark} = useTheme();
   const safeAreaInsets = useSafeAreaInsets();
-  const styles = getStyles(safeAreaInsets);
+
+  const effectiveStatusContent =
+    statusContent || (dark ? 'light-content' : 'dark-content');
+
   return (
-    <View style={[styles.container, containerStyle]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: useSafeAreaTop ? safeAreaInsets.top : 0,
+        },
+        containerStyle,
+      ]}>
       <StatusBar
-        backgroundColor={statusColor}
-        barStyle={statusContent}
+        backgroundColor="transparent"
+        translucent={true}
+        barStyle={effectiveStatusContent}
         animated={true}
       />
-      <SafeAreaView
-        style={[styles.contentContainerStyle, contentContainerStyle]}>
+      <View style={[styles.contentContainerStyle, contentContainerStyle]}>
         {children}
-      </SafeAreaView>
+      </View>
     </View>
   );
 };
 
 export default Container;
 
-const getStyles = safeAreaInsets => {
-  return StyleSheet.create({
-    container: {
-      flex: 1,
-      paddingTop: safeAreaInsets.top,
-      backgroundColor: '#fff',
-    },
-    contentContainerStyle: {flex: 1},
-  });
-};
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  contentContainerStyle: {flex: 1},
+});

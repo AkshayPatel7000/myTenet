@@ -11,7 +11,7 @@ const EmptyComponent = ({
   icon = 'home-city-outline',
   useLottie = true,
 }) => {
-  const {colors} = useTheme();
+  const {colors, dark} = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.92)).current;
 
@@ -36,13 +36,20 @@ const EmptyComponent = ({
       style={[
         styles.container,
         {
+          backgroundColor: colors.surface,
+          borderColor: colors.outlineVariant || (dark ? '#334155' : '#F1F5F9'),
           opacity: fadeAnim,
           transform: [{scale: scaleAnim}],
         },
       ]}>
       {/* Visual Illustration */}
       <View style={styles.illustrationWrapper}>
-        <View style={[styles.glowCircle, {backgroundColor: colors.primaryContainer}]} />
+        <View
+          style={[
+            styles.glowCircle,
+            {backgroundColor: colors.primaryContainer || (dark ? '#312E81' : '#EEF2FF')},
+          ]}
+        />
         {useLottie ? (
           <LottieView
             autoPlay
@@ -58,8 +65,10 @@ const EmptyComponent = ({
       </View>
 
       {/* Copywriting & Action */}
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.subtitle}>{subtitle}</Text>
+      <Text style={[styles.title, {color: colors.onSurface}]}>{title}</Text>
+      <Text style={[styles.subtitle, {color: colors.onSurfaceVariant}]}>
+        {subtitle}
+      </Text>
 
       {actionLabel && onActionPress ? (
         <Button
@@ -84,10 +93,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 32,
     marginVertical: 10,
-    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
     elevation: 2,
     shadowColor: '#0F172A',
     shadowOffset: {width: 0, height: 2},
@@ -123,14 +130,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#0F172A',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#64748B',
     textAlign: 'center',
     lineHeight: 19,
     marginBottom: 20,

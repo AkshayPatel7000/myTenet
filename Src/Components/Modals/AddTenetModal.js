@@ -29,7 +29,7 @@ import {
 import KeyboardAwareScrollView from '../KeyboardAwareScrollView';
 
 const AddTenetModal = ({visible, hideModal, editData}) => {
-  const {colors} = useTheme();
+  const {colors, dark} = useTheme();
   const [loading, setLoading] = useState(false);
 
   const dateNew = () => {
@@ -101,16 +101,28 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
       <Modal
         visible={visible}
         onDismiss={hideModal}
-        contentContainerStyle={styles.sheetContainer}>
-        <View style={styles.sheetPill} />
+        contentContainerStyle={[
+          styles.sheetContainer,
+          {backgroundColor: colors.surface},
+        ]}>
+        <View
+          style={[
+            styles.sheetPill,
+            {backgroundColor: colors.outlineVariant || '#CBD5E1'},
+          ]}
+        />
 
         <KeyboardAvoidingView
           style={{flex: 1}}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.headerContainer}>
             <View style={styles.titleRow}>
-              <Icon source={isEditing ? 'account-edit' : 'account-plus'} size={24} color={colors.primary} />
-              <Text style={styles.heading}>
+              <Icon
+                source={isEditing ? 'account-edit' : 'account-plus'}
+                size={24}
+                color={colors.primary}
+              />
+              <Text style={[styles.heading, {color: colors.onSurface}]}>
                 {isEditing ? 'Edit Tenant Details' : 'Add New Tenant'}
               </Text>
             </View>
@@ -155,7 +167,6 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
                     onBlur={handleBlur('name')}
                     value={values.name}
                     error={!!errors.name}
-                    style={styles.input}
                   />
                   <HelperText type="error" visible={!!errors.name}>
                     {errors.name}
@@ -170,7 +181,6 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
                     onBlur={handleBlur('phone')}
                     value={values.phone}
                     error={!!errors.phone}
-                    style={styles.input}
                   />
                   <HelperText type="error" visible={!!errors.phone}>
                     {errors.phone}
@@ -185,7 +195,6 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
                     onBlur={handleBlur('aadharNo')}
                     value={values.aadharNo}
                     error={!!errors.aadharNo}
-                    style={styles.input}
                   />
                   <HelperText type="error" visible={!!errors.aadharNo}>
                     {errors.aadharNo}
@@ -197,7 +206,11 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
                     render={arrayHelpers => (
                       <View style={styles.membersSection}>
                         <View style={styles.membersSectionHeader}>
-                          <Text style={styles.membersSectionTitle}>
+                          <Text
+                            style={[
+                              styles.membersSectionTitle,
+                              {color: colors.onSurface},
+                            ]}>
                             Family / Room Members ({values.otherMembers.length})
                           </Text>
                           <Button
@@ -216,9 +229,21 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
                         </View>
 
                         {values?.otherMembers.map((member, index) => (
-                          <Surface key={index} style={styles.memberCard}>
+                          <Surface
+                            key={index}
+                            style={[
+                              styles.memberCard,
+                              {
+                                backgroundColor: dark ? '#334155' : '#F8FAFC',
+                                borderColor: colors.outlineVariant || '#E2E8F0',
+                              },
+                            ]}>
                             <View style={styles.memberHeader}>
-                              <Text style={styles.memberTitle}>
+                              <Text
+                                style={[
+                                  styles.memberTitle,
+                                  {color: colors.onSurface},
+                                ]}>
                                 Member #{index + 1}
                               </Text>
                               <IconButton
@@ -302,7 +327,6 @@ export default AddTenetModal;
 
 const styles = StyleSheet.create({
   sheetContainer: {
-    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     borderBottomLeftRadius: 0,
@@ -320,7 +344,6 @@ const styles = StyleSheet.create({
     width: 38,
     height: 5,
     borderRadius: 3,
-    backgroundColor: '#CBD5E1',
     alignSelf: 'center',
     marginBottom: 10,
   },
@@ -336,7 +359,6 @@ const styles = StyleSheet.create({
   },
   heading: {
     fontSize: 18,
-    color: '#0F172A',
     fontWeight: '700',
     marginLeft: 8,
   },
@@ -346,9 +368,6 @@ const styles = StyleSheet.create({
   },
   datePickerContainer: {
     marginBottom: 6,
-  },
-  input: {
-    backgroundColor: '#FFF',
   },
   membersSection: {
     marginTop: 12,
@@ -363,15 +382,12 @@ const styles = StyleSheet.create({
   membersSectionTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#334155',
   },
   memberCard: {
-    backgroundColor: '#F8FAFC',
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   memberHeader: {
     flexDirection: 'row',
@@ -382,10 +398,8 @@ const styles = StyleSheet.create({
   memberTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#475569',
   },
   memberInput: {
-    backgroundColor: '#FFF',
     marginBottom: 8,
   },
   submitBtn: {
