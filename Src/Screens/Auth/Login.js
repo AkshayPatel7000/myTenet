@@ -114,11 +114,14 @@ const Login = ({navigation}) => {
   return (
     <Container statusContent="light-content">
       <LinearGradient
-        colors={dark ? ['#0F172A', '#1E1B4B', '#0F172A'] : ['#3730A3', '#4F46E5', '#6366F1']}
+        colors={
+          dark
+            ? ['#0F172A', '#1E1B4B', '#0F172A']
+            : ['#3730A3', '#4F46E5', '#6366F1']
+        }
         useAngle={true}
         angle={145}
         style={styles.fullGradientBackground}>
-
         {/* Ambient Glow Circles */}
         <View style={styles.ambientGlowTop} />
         <View style={styles.ambientGlowBottom} />
@@ -126,14 +129,17 @@ const Login = ({navigation}) => {
         <KeyboardAvoidingView
           style={{flex: 1}}
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-          <KeyboardAwareScrollView contentContainerStyle={[styles.scrollContent, {paddingTop: topPadding}]}>
-
+          <KeyboardAwareScrollView
+            contentContainerStyle={[
+              styles.scrollContent,
+              {paddingTop: topPadding},
+            ]}>
             {/* Brand Header */}
             <View style={styles.brandContainer}>
               <View style={styles.brandBadgeCircle}>
                 <Icon source="home-city" size={34} color="#818CF8" />
               </View>
-              <Text style={styles.brandTitle}>myTenet</Text>
+              <Text style={styles.brandTitle}>My Rooms</Text>
               <Text style={styles.brandSubtitle}>
                 Smart Rental Property & Utility Manager
               </Text>
@@ -145,18 +151,27 @@ const Login = ({navigation}) => {
                 styles.formCardSurface,
                 {
                   backgroundColor: colors.surface,
-                  borderColor: colors.outlineVariant || (dark ? '#334155' : '#E2E8F0'),
+                  borderColor:
+                    colors.outlineVariant || (dark ? '#334155' : '#E2E8F0'),
                 },
               ]}>
               <View style={styles.cardTitleRow}>
                 <View style={styles.iconBox}>
-                  <Icon source="lock-open-outline" size={20} color={colors.primary} />
+                  <Icon
+                    source="lock-open-outline"
+                    size={20}
+                    color={colors.primary}
+                  />
                 </View>
                 <View style={{marginLeft: 10}}>
                   <Text style={[styles.cardTitle, {color: colors.onSurface}]}>
                     Welcome Back
                   </Text>
-                  <Text style={[styles.cardSubTitle, {color: colors.onSurfaceVariant}]}>
+                  <Text
+                    style={[
+                      styles.cardSubTitle,
+                      {color: colors.onSurfaceVariant},
+                    ]}>
                     Sign in to access your property dashboard
                   </Text>
                 </View>
@@ -210,8 +225,14 @@ const Login = ({navigation}) => {
 
                       <TouchableOpacity
                         style={styles.forgotPasswordBtn}
-                        onPress={() => navigation.navigate('ForgotPasswordScreen')}>
-                        <Text style={[styles.forgotPasswordText, {color: colors.primary}]}>
+                        onPress={() =>
+                          navigation.navigate('ForgotPasswordScreen')
+                        }>
+                        <Text
+                          style={[
+                            styles.forgotPasswordText,
+                            {color: colors.primary},
+                          ]}>
                           Forgot Password?
                         </Text>
                       </TouchableOpacity>
@@ -229,9 +250,31 @@ const Login = ({navigation}) => {
                       </Button>
 
                       <View style={styles.dividerRow}>
-                        <View style={[styles.dividerLine, {backgroundColor: colors.outlineVariant || '#E2E8F0'}]} />
-                        <Text style={[styles.dividerText, {color: colors.onSurfaceVariant}]}>OR CONTINUE WITH</Text>
-                        <View style={[styles.dividerLine, {backgroundColor: colors.outlineVariant || '#E2E8F0'}]} />
+                        <View
+                          style={[
+                            styles.dividerLine,
+                            {
+                              backgroundColor:
+                                colors.outlineVariant || '#E2E8F0',
+                            },
+                          ]}
+                        />
+                        <Text
+                          style={[
+                            styles.dividerText,
+                            {color: colors.onSurfaceVariant},
+                          ]}>
+                          OR CONTINUE WITH
+                        </Text>
+                        <View
+                          style={[
+                            styles.dividerLine,
+                            {
+                              backgroundColor:
+                                colors.outlineVariant || '#E2E8F0',
+                            },
+                          ]}
+                        />
                       </View>
 
                       <TouchableOpacity
@@ -248,12 +291,19 @@ const Login = ({navigation}) => {
                         {!loading ? (
                           <>
                             <GoogleLogo width={22} height={22} />
-                            <Text style={[styles.googleBtnText, {color: colors.onSurface}]}>
+                            <Text
+                              style={[
+                                styles.googleBtnText,
+                                {color: colors.onSurface},
+                              ]}>
                               Sign in with Google
                             </Text>
                           </>
                         ) : (
-                          <ActivityIndicator size="small" color={colors.primary} />
+                          <ActivityIndicator
+                            size="small"
+                            color={colors.primary}
+                          />
                         )}
                       </TouchableOpacity>
                     </View>

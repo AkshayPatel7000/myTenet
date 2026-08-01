@@ -81,7 +81,7 @@ const SplashScreen = () => {
             />
           </View>
 
-          <Text style={styles.appTitle}>myTenet</Text>
+          <Text style={styles.appTitle}>My Rooms</Text>
           <Text style={styles.appSubtitle}>
             Smart Rental Property & Utility Manager
           </Text>
