@@ -540,6 +540,83 @@ export const updatePartialPayment = async ({
     showError('Tenants Rooms Not Found');
   }
 };
+
+const addUnifiedPropertyAndTenant = async values => {
+  try {
+    const userId = store?.getState()?.AuthSlice?.userProfile?.uid;
+    if (!userId) {
+      showError('User session invalid');
+      return false;
+    }
+
+    // 1. Create Room Document
+    const roomRef = await firestore()
+      .collection('users')
+      .doc(userId)
+      .collection('rooms')
+      .add({
+        roomName: values.roomName,
+        roomNo: values.roomNo || '1',
+        rent: values.rent,
+        advance: values.advance || '0',
+        perUnit: values.perUnit || '10',
+        startReading: values.startReading || '0',
+        createdAt: Date.now(),
+        currentTenantId: '',
+        tenetName: values.tenantName || '',
+        startDate: values.startDate
+          ? moment(values.startDate).format('DD-MMMM-YYYY')
+          : moment().format('DD-MMMM-YYYY'),
+      });
+
+    const roomId = roomRef.id;
+
+    // 2. Create Tenant Subcollection document if Tenant info is present
+    if (values.tenantName && values.tenantPhone) {
+      const tenantRef = await firestore()
+        .collection('users')
+        .doc(userId)
+        .collection('rooms')
+        .doc(roomId)
+        .collection('Tenants')
+        .add({
+          name: values.tenantName,
+          phone: values.tenantPhone,
+          aadharNo: values.aadharNo || '',
+          startDate: values.startDate
+            ? moment(values.startDate).format('DD-MMMM-YYYY')
+            : moment().format('DD-MMMM-YYYY'),
+          createdAt: Date.now(),
+        });
+
+      const tenantId = tenantRef.id;
+
+      // 3. Link currentTenantId back to the room
+      await firestore()
+        .collection('users')
+        .doc(userId)
+        .collection('rooms')
+        .doc(roomId)
+        .update({
+          currentTenantId: tenantId,
+          tenetName: values.tenantName,
+          startDate: values.startDate
+            ? moment(values.startDate).format('DD-MMMM-YYYY')
+            : moment().format('DD-MMMM-YYYY'),
+        });
+    }
+
+    await getUserRooms();
+    await getData();
+    showSuccess('Property & Tenant added successfully!');
+    return true;
+  } catch (error) {
+    console.log('🚀 ~ addUnifiedPropertyAndTenant ~ error:', error);
+    showError('Failed to add property and tenant');
+    return false;
+  }
+};
+
 export {
   addUser,
   getUser,
@@ -558,4 +635,6 @@ export {
   updateRoomTenet,
   removeRoomTenet,
   removeUserRoom,
+  addUnifiedPropertyAndTenant,
 };
+

@@ -1,35 +1,45 @@
-import {Formik, FieldArray} from 'formik';
 import React, {useState} from 'react';
-import {Pressable, ScrollView, StyleSheet, View} from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import {
   Button,
   HelperText,
+  Icon,
   IconButton,
   Modal,
   Portal,
+  Surface,
   Text,
   TextInput,
+  useTheme,
 } from 'react-native-paper';
 import {DatePickerInput} from 'react-native-paper-dates';
+import {Formik, FieldArray} from 'formik';
 import * as Yup from 'yup';
+import moment from 'moment';
 import {
   addRoomTenet,
   updateRoomTenet,
-  updateUserRoom,
 } from '../../Services/Collections';
-import moment from 'moment';
+import KeyboardAwareScrollView from '../KeyboardAwareScrollView';
 
 const AddTenetModal = ({visible, hideModal, editData}) => {
+  const {colors} = useTheme();
   const [loading, setLoading] = useState(false);
+
   const dateNew = () => {
-    return editData?.startDate
-      ? new Date(
-          `${
-            moment(editData?.startDate, 'DD-MMM-YYYY').format('YYYY-MM-DD') +
-            'T18:30:00.000Z'
-          }`,
-        )
-      : '';
+    if (!editData?.startDate) return new Date();
+    try {
+      const parsed = moment(editData?.startDate, 'DD-MMMM-YYYY');
+      return parsed.isValid() ? parsed.toDate() : new Date();
+    } catch (e) {
+      return new Date();
+    }
   };
 
   const initialValue = {
@@ -41,198 +51,159 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
   };
 
   const validationSchema = Yup.object().shape({
-    name: Yup.string().required('Tenet name amount is required!'),
+    name: Yup.string().required('Tenant full name is required!'),
     phone: Yup.string()
-      .required('Phone no. is required!')
+      .required('Phone number is required!')
       .matches(
         /^(?:(?:\+|0{0,2})|[0]?)?[6789]\d{9}$/,
-        'Enter a valid phone no.',
+        'Enter valid 10-digit phone number',
       ),
-    startDate: Yup.string().required('Tenet start date is required!'),
-    aadharNo: Yup.string().matches(/^\d{12}$/, 'Enter a valid aadhar no.'),
+    startDate: Yup.date().required('Move-in start date is required!'),
+    aadharNo: Yup.string().matches(/^\d{12}$/, 'Aadhar must be exactly 12 digits'),
   });
 
   const _onAddPress = async values => {
-    console.log('🚀 ~ AddTenetModal ~ values:', values);
     try {
       setLoading(true);
-      const response = await addRoomTenet(values, null);
+      await addRoomTenet(values, null);
       setLoading(false);
-
       hideModal();
     } catch (error) {
       setLoading(false);
-
-      console.log('🚀 ~ _onAddPress=async ~ error:', error);
+      console.log('🚀 ~ _onAddPress ~ error:', error);
     }
   };
+
   const _onEditPress = async values => {
     try {
       setLoading(true);
-      const response = await updateRoomTenet(values, editData);
-      console.log('🚀 ~ _onEditPress ~ response:', response);
+      await updateRoomTenet(values, editData);
       setLoading(false);
-
       hideModal();
     } catch (error) {
       setLoading(false);
-
-      console.log('🚀 ~ _onEditPress=async ~ error:', error);
+      console.log('🚀 ~ _onEditPress ~ error:', error);
     }
   };
+
   const onSubmit = values => {
-    console.log(
-      '🚀 ~ onSubmit ~ editData?.currentTenantId:',
-      editData?.tenantId,
-    );
     if (editData?.tenantId) {
-      // console.log("🚀 ~ onSubmit ~ editData?.currentTenantId:", editData?.currentTenantId)
       _onEditPress(values);
     } else {
       _onAddPress(values);
     }
   };
 
+  const isEditing = !!editData?.tenantId;
+
   return (
     <Portal>
       <Modal
         visible={visible}
         onDismiss={hideModal}
-        contentContainerStyle={styles.containerStyle}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.heading}>
-            {editData?.tenantId ? 'Edit Tenet' : 'Add new tenet'}
-          </Text>
-          <IconButton icon="close" onPress={hideModal} size={20} />
-        </View>
+        contentContainerStyle={styles.sheetContainer}>
+        <View style={styles.sheetPill} />
 
-        <Formik
-          initialValues={initialValue}
-          onSubmit={onSubmit}
-          validationSchema={validationSchema}>
-          {({
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            values,
-            errors,
-            setFieldValue,
-          }) => {
-            return (
-              <>
-                <ScrollView style={{marginBottom: 20}}>
-                  <View style={{marginTop: 10}}>
+        <KeyboardAvoidingView
+          style={{flex: 1}}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <View style={styles.headerContainer}>
+            <View style={styles.titleRow}>
+              <Icon source={isEditing ? 'account-edit' : 'account-plus'} size={24} color={colors.primary} />
+              <Text style={styles.heading}>
+                {isEditing ? 'Edit Tenant Details' : 'Add New Tenant'}
+              </Text>
+            </View>
+            <IconButton icon="close" onPress={hideModal} size={20} />
+          </View>
+
+          <Formik
+            initialValues={initialValue}
+            onSubmit={onSubmit}
+            validationSchema={validationSchema}
+            enableReinitialize>
+            {({
+              handleChange,
+              handleBlur,
+              handleSubmit,
+              values,
+              errors,
+              setFieldValue,
+            }) => {
+              return (
+                <KeyboardAwareScrollView contentContainerStyle={styles.scrollContent}>
+                  <View style={styles.datePickerContainer}>
                     <DatePickerInput
+                      locale="en"
                       hasError={!!errors.startDate}
-                      label="Start Date"
+                      label="Move-In Start Date"
                       value={values.startDate}
-                      onChange={e => setFieldValue('startDate', e)}
+                      onChange={d => setFieldValue('startDate', d)}
                       inputMode="start"
+                      mode="outlined"
                     />
                     <HelperText type="error" visible={!!errors.startDate}>
                       {errors.startDate}
                     </HelperText>
                   </View>
+
                   <TextInput
-                    label={'Tenet Name'}
+                    label="Tenant Full Name"
+                    mode="outlined"
+                    left={<TextInput.Icon icon="account-outline" />}
                     onChangeText={handleChange('name')}
                     onBlur={handleBlur('name')}
                     value={values.name}
                     error={!!errors.name}
-                    errorText={errors.name}
-                    autoCapitalize="none"
+                    style={styles.input}
                   />
                   <HelperText type="error" visible={!!errors.name}>
                     {errors.name}
                   </HelperText>
+
                   <TextInput
-                    label={'Tenet Phone'}
+                    label="Tenant Phone Number"
+                    mode="outlined"
+                    keyboardType="phone-pad"
+                    left={<TextInput.Icon icon="phone-outline" />}
                     onChangeText={handleChange('phone')}
                     onBlur={handleBlur('phone')}
                     value={values.phone}
                     error={!!errors.phone}
-                    errorText={errors.phone}
-                    autoCapitalize="none"
-                    keyboardType="phone-pad"
+                    style={styles.input}
                   />
                   <HelperText type="error" visible={!!errors.phone}>
                     {errors.phone}
                   </HelperText>
 
                   <TextInput
-                    label={'Aadhar No.'}
+                    label="Aadhar Number (12 Digits)"
+                    mode="outlined"
+                    keyboardType="number-pad"
+                    left={<TextInput.Icon icon="card-account-details-outline" />}
                     onChangeText={handleChange('aadharNo')}
                     onBlur={handleBlur('aadharNo')}
                     value={values.aadharNo}
                     error={!!errors.aadharNo}
-                    errorText={errors.aadharNo}
-                    autoCapitalize="none"
-                    keyboardType="number-pad"
+                    style={styles.input}
                   />
                   <HelperText type="error" visible={!!errors.aadharNo}>
                     {errors.aadharNo}
                   </HelperText>
+
+                  {/* Family / Additional Members Section */}
                   <FieldArray
                     name="otherMembers"
                     render={arrayHelpers => (
-                      <View>
-                        {values?.otherMembers.map((member, index) => (
-                          <>
-                            <View style={styles.memberHeading}>
-                              <Text>Member {index + 1}</Text>
-                              <IconButton
-                                icon="close"
-                                mode="contained"
-                                size={12}
-                                onPress={() => arrayHelpers.remove(index)}
-                              />
-                            </View>
-                            <TextInput
-                              label={'Member Name'}
-                              onChangeText={handleChange(
-                                `otherMembers[${index}].name`,
-                              )}
-                              onBlur={handleBlur('otherMembers[${index}].name')}
-                              value={member.name}
-                              autoCapitalize="none"
-                              style={styles.memberInput}
-                            />
-
-                            <TextInput
-                              label={'Member Phone'}
-                              onChangeText={handleChange(
-                                `otherMembers[${index}].phone`,
-                              )}
-                              onBlur={handleBlur(
-                                `otherMembers[${index}].phone`,
-                              )}
-                              autoCapitalize="none"
-                              keyboardType="phone-pad"
-                              style={styles.memberInput}
-                              value={member.phone}
-                            />
-
-                            <TextInput
-                              label={'Member Aadhar No.'}
-                              onChangeText={handleChange(
-                                `otherMembers[${index}].aadharNo`,
-                              )}
-                              onBlur={handleBlur(
-                                `otherMembers[${index}].aadharNo`,
-                              )}
-                              autoCapitalize="none"
-                              keyboardType="number-pad"
-                              style={styles.memberInput}
-                              value={member.aadharNo}
-                            />
-                          </>
-                        ))}
-                        <View
-                          style={{
-                            alignItems: 'flex-end',
-                            marginBottom: 20,
-                          }}>
-                          <Pressable
+                      <View style={styles.membersSection}>
+                        <View style={styles.membersSectionHeader}>
+                          <Text style={styles.membersSectionTitle}>
+                            Family / Room Members ({values.otherMembers.length})
+                          </Text>
+                          <Button
+                            mode="tonal"
+                            compact
+                            icon="plus"
                             onPress={() =>
                               arrayHelpers.push({
                                 name: '',
@@ -240,24 +211,88 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
                                 aadharNo: '',
                               })
                             }>
-                            <Text variant="bodyLarge">Add Member</Text>
-                          </Pressable>
+                            Add Member
+                          </Button>
                         </View>
+
+                        {values?.otherMembers.map((member, index) => (
+                          <Surface key={index} style={styles.memberCard}>
+                            <View style={styles.memberHeader}>
+                              <Text style={styles.memberTitle}>
+                                Member #{index + 1}
+                              </Text>
+                              <IconButton
+                                icon="close-circle-outline"
+                                iconColor={colors.error}
+                                size={20}
+                                onPress={() => arrayHelpers.remove(index)}
+                              />
+                            </View>
+
+                            <TextInput
+                              label="Member Full Name"
+                              mode="outlined"
+                              dense
+                              onChangeText={handleChange(
+                                `otherMembers[${index}].name`,
+                              )}
+                              onBlur={handleBlur(
+                                `otherMembers[${index}].name`,
+                              )}
+                              value={member.name}
+                              style={styles.memberInput}
+                            />
+
+                            <TextInput
+                              label="Member Phone Number"
+                              mode="outlined"
+                              dense
+                              keyboardType="phone-pad"
+                              onChangeText={handleChange(
+                                `otherMembers[${index}].phone`,
+                              )}
+                              onBlur={handleBlur(
+                                `otherMembers[${index}].phone`,
+                              )}
+                              value={member.phone}
+                              style={styles.memberInput}
+                            />
+
+                            <TextInput
+                              label="Member Aadhar No."
+                              mode="outlined"
+                              dense
+                              keyboardType="number-pad"
+                              onChangeText={handleChange(
+                                `otherMembers[${index}].aadharNo`,
+                              )}
+                              onBlur={handleBlur(
+                                `otherMembers[${index}].aadharNo`,
+                              )}
+                              value={member.aadharNo}
+                              style={styles.memberInput}
+                            />
+                          </Surface>
+                        ))}
                       </View>
                     )}
                   />
-                </ScrollView>
-                <Button
-                  mode="contained"
-                  onPress={handleSubmit}
-                  loading={loading}
-                  disabled={loading}>
-                  {editData?.tenantId ? 'Save Tenet' : 'Add Tenet'}
-                </Button>
-              </>
-            );
-          }}
-        </Formik>
+
+                  <Button
+                    mode="contained"
+                    icon="content-save-check"
+                    style={styles.submitBtn}
+                    labelStyle={{fontWeight: '700'}}
+                    onPress={handleSubmit}
+                    loading={loading}
+                    disabled={loading}>
+                    {isEditing ? 'Save Tenant Changes' : 'Add Tenant Record'}
+                  </Button>
+                </KeyboardAwareScrollView>
+              );
+            }}
+          </Formik>
+        </KeyboardAvoidingView>
       </Modal>
     </Portal>
   );
@@ -266,32 +301,97 @@ const AddTenetModal = ({visible, hideModal, editData}) => {
 export default AddTenetModal;
 
 const styles = StyleSheet.create({
-  containerStyle: {
-    marginHorizontal: 20,
-    backgroundColor: 'white',
+  sheetContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     paddingHorizontal: 20,
-    paddingBottom: 30,
-    borderRadius: 8,
+    paddingTop: 10,
+    paddingBottom: 20,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '85%',
   },
-  heading: {
-    fontSize: 18,
-    color: '#000',
-    fontWeight: '600',
+  sheetPill: {
+    width: 38,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#CBD5E1',
+    alignSelf: 'center',
+    marginBottom: 10,
   },
   headerContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
     alignItems: 'center',
+    marginBottom: 10,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  heading: {
+    fontSize: 18,
+    color: '#0F172A',
+    fontWeight: '700',
+    marginLeft: 8,
+  },
+  scrollContent: {
+    paddingBottom: 60,
+    flexGrow: 1,
+  },
+  datePickerContainer: {
+    marginBottom: 6,
+  },
+  input: {
+    backgroundColor: '#FFF',
+  },
+  membersSection: {
+    marginTop: 12,
+    marginBottom: 10,
+  },
+  membersSectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  membersSectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#334155',
+  },
+  memberCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  memberHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  memberTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#475569',
   },
   memberInput: {
-    marginBottom: 20,
+    backgroundColor: '#FFF',
+    marginBottom: 8,
   },
-  memberHeading: {
-    marginBottom: 20,
-    flexDirection: 'row',
-
-    alignItems: 'center',
-    justifyContent: 'space-between',
+  submitBtn: {
+    marginTop: 14,
+    marginBottom: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
   },
 });

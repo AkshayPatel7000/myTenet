@@ -1,6 +1,5 @@
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {useTheme} from '@react-navigation/native';
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {
   Animated,
   Keyboard,
@@ -9,172 +8,200 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-
+import {Icon, Text, useTheme} from 'react-native-paper';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
-import RoutesName from '../../Utils/Resource/RoutesName';
 import {Home, MyTenant, Profile} from '../../Screens';
-import {Icon, MD3Colors, withTheme} from 'react-native-paper';
+import RoutesName from '../../Utils/Resource/RoutesName';
 
 const BottomTab = createBottomTabNavigator();
+
+const TAB_CONFIG = {
+  [RoutesName.HOME]: {
+    label: 'Rooms',
+    activeIcon: 'home-city',
+    inactiveIcon: 'home-city-outline',
+  },
+  [RoutesName.TENANT]: {
+    label: 'Tenants',
+    activeIcon: 'account-group',
+    inactiveIcon: 'account-group-outline',
+  },
+  [RoutesName.PROFILE]: {
+    label: 'Profile',
+    activeIcon: 'account-circle',
+    inactiveIcon: 'account-circle-outline',
+  },
+};
+
 function MyTabBar({state, descriptors, navigation}) {
-  const {colors, dark} = useTheme();
-  const styles = getStyles(colors, dark);
-  const scrollY = React.useRef(new Animated.Value(0)).current;
-  const translateY = scrollY.interpolate({
-    inputRange: [0, 60],
-    outputRange: [0, -60],
-  });
+  const {colors} = useTheme();
   const safeAreaInsets = useSafeAreaInsets();
-  let fromBottom =
-    Platform.OS == 'ios' ? safeAreaInsets.bottom : safeAreaInsets.bottom + 20;
-  const [showTab, setShowTab] = React.useState(true);
+  const [showTab, setShowTab] = useState(true);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  const translateX = useRef(new Animated.Value(0)).current;
+
+  const bottomMargin = Platform.OS === 'ios'
+    ? Math.max(safeAreaInsets.bottom, 12)
+    : 16;
+
+  const tabWidth = containerWidth > 0 ? (containerWidth - 16) / state.routes.length : 0;
+
   useEffect(() => {
-    const Subs = Keyboard.addListener('keyboardDidShow', _keyboardDidShow);
-    Keyboard.addListener('keyboardDidHide', _keyboardDidHide);
+    if (tabWidth > 0) {
+      Animated.spring(translateX, {
+        toValue: state.index * tabWidth,
+        friction: 8,
+        tension: 65,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [state.index, tabWidth, translateX]);
+
+  useEffect(() => {
+    const showSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => setShowTab(false),
+    );
+    const hideSub = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
+      () => setShowTab(true),
+    );
+
     return () => {
-      Subs.remove();
+      showSub.remove();
+      hideSub.remove();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const _keyboardDidShow = () => {
-    setShowTab(false);
-    scrollY.setValue(-100);
-  };
-  const _keyboardDidHide = () => {
-    setShowTab(true);
-    scrollY.setValue(0);
-  };
+  if (!showTab) return null;
+
   return (
-    <>
-      {showTab && (
+    <View
+      style={[styles.tabBarContainer, {bottom: bottomMargin}]}
+      onLayout={e => setContainerWidth(e.nativeEvent.layout.width)}>
+      
+      {/* Animated Sliding Background Pill */}
+      {containerWidth > 0 ? (
         <Animated.View
           style={[
-            styles.main,
-            {marginBottom: fromBottom, transform: [{translateY: scrollY}]},
-          ]}>
-          <>
-            {state.routes.map((route, index) => {
-              const {options} = descriptors[route.key];
-              const label =
-                options.tabBarLabel !== undefined
-                  ? options.tabBarLabel
-                  : options.title !== undefined
-                    ? options.title
-                    : route.name;
-              const isFocused = state.index === index;
-              const onPress = () => {
-                navigation.navigate({name: route.name, merge: true});
-              };
+            styles.slidingPill,
+            {
+              width: tabWidth,
+              transform: [{translateX}],
+            },
+          ]}
+        />
+      ) : null}
 
-              return (
-                <View key={label} style={styles.singleItem}>
-                  <TouchableOpacity
-                    accessibilityRole="button"
-                    accessibilityState={isFocused ? {selected: true} : {}}
-                    accessibilityLabel={options.tabBarAccessibilityLabel}
-                    testID={options.tabBarTestID}
-                    onPress={() => onPress()}>
-                    <View
-                      style={{
-                        paddingHorizontal: 30,
-                        paddingVertical: 5,
-                        borderRadius: 100,
-                        backgroundColor: isFocused
-                          ? options.iconColor
-                          : '#FFFFFFE6',
-                      }}>
-                      {!isFocused ? (
-                        <Icon
-                          source={options.icon}
-                          color={options.iconColor}
-                          size={25}
-                        />
-                      ) : (
-                        <Icon
-                          source={options.iconInActive}
-                          color={options.iconInActiveColor}
-                          size={25}
-                        />
-                      )}
-                    </View>
-                  </TouchableOpacity>
-                </View>
-              );
-            })}
-          </>
-        </Animated.View>
-      )}
-    </>
+      {state.routes.map((route, index) => {
+        const isFocused = state.index === index;
+        const tabMeta = TAB_CONFIG[route.name] || {
+          label: route.name,
+          activeIcon: 'checkbox-blank-circle',
+          inactiveIcon: 'checkbox-blank-circle-outline',
+        };
+
+        const onPress = () => {
+          const event = navigation.emit({
+            type: 'tabPress',
+            target: route.key,
+            canPreventDefault: true,
+          });
+
+          if (!isFocused && !event.defaultPrevented) {
+            navigation.navigate({name: route.name, merge: true});
+          }
+        };
+
+        return (
+          <TouchableOpacity
+            key={route.key}
+            activeOpacity={0.8}
+            onPress={onPress}
+            style={styles.tabItem}>
+            <View style={styles.tabContent}>
+              <Icon
+                source={isFocused ? tabMeta.activeIcon : tabMeta.inactiveIcon}
+                size={22}
+                color={isFocused ? colors.primary : '#64748B'}
+              />
+              <Text
+                style={[
+                  styles.tabLabel,
+                  {color: isFocused ? colors.primary : '#64748B'},
+                  isFocused && styles.activeTabLabel,
+                ]}>
+                {tabMeta.label}
+              </Text>
+            </View>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
   );
 }
 
-const BottomTabs = ({theme}) => {
+const BottomTabs = () => {
   return (
     <BottomTab.Navigator
-      // eslint-disable-next-line react/no-unstable-nested-components
-      tabBar={tabsProps => <MyTabBar {...tabsProps} />}
-      screenOptions={{headerShown: false, tabBarHideOnKeyboard: true}}
-      options={{tabBarHideOnKeyboard: true}}>
-      <BottomTab.Screen
-        name={RoutesName.HOME}
-        options={{
-          tabBarHideOnKeyboard: true,
-          icon: 'home',
-          iconInActive: 'home',
-          iconColor: theme.colors.primary,
-          iconInActiveColor: theme.colors.onPrimary,
-        }}
-        component={Home}
-      />
-      <BottomTab.Screen
-        name={RoutesName.TENANT}
-        options={{
-          tabBarHideOnKeyboard: true,
-
-          icon: 'account-cash',
-          iconInActive: 'account-cash',
-          iconColor: theme.colors.primary,
-          iconInActiveColor: theme.colors.onPrimary,
-        }}
-        component={MyTenant}
-      />
-      <BottomTab.Screen
-        name={RoutesName.PROFILE}
-        options={{
-          tabBarHideOnKeyboard: true,
-
-          icon: 'face-man-profile',
-          iconInActive: 'face-man-profile',
-          iconColor: theme.colors.primary,
-          iconInActiveColor: theme.colors.onPrimary,
-        }}
-        component={Profile}
-      />
+      tabBar={props => <MyTabBar {...props} />}
+      screenOptions={{headerShown: false, tabBarHideOnKeyboard: true}}>
+      <BottomTab.Screen name={RoutesName.HOME} component={Home} />
+      <BottomTab.Screen name={RoutesName.TENANT} component={MyTenant} />
+      <BottomTab.Screen name={RoutesName.PROFILE} component={Profile} />
     </BottomTab.Navigator>
   );
 };
-export default withTheme(BottomTabs);
-const getStyles = (colors, dark) => {
-  return StyleSheet.create({
-    main: {
-      flexDirection: 'row',
-      position: 'absolute',
-      bottom: 0,
-      backgroundColor: dark ? '#19191980' : '#FFFFFFE6',
-      marginHorizontal: 18,
-      borderRadius: 20,
-      height: 60,
-      left: 0,
-      right: 0,
-      elevation: 22,
-    },
-    singleItem: {
-      flex: 1,
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      marginVertical: 10,
-    },
-  });
-};
+
+export default BottomTabs;
+
+const styles = StyleSheet.create({
+  tabBarContainer: {
+    position: 'absolute',
+    left: 20,
+    right: 20,
+    height: 64,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    elevation: 8,
+    shadowColor: '#0F172A',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
+  },
+  slidingPill: {
+    position: 'absolute',
+    left: 8,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#EEF2FF',
+  },
+  tabItem: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '100%',
+    zIndex: 1,
+  },
+  tabContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  tabLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginLeft: 6,
+  },
+  activeTabLabel: {
+    fontWeight: '800',
+  },
+});

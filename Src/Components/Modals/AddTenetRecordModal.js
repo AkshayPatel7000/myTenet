@@ -1,10 +1,9 @@
 import {Formik} from 'formik';
 import React, {useState} from 'react';
 import {
-  Alert,
   Image,
   PermissionsAndroid,
-  ScrollView,
+  Platform,
   StyleSheet,
   View,
 } from 'react-native';
@@ -15,27 +14,28 @@ import {
   IconButton,
   Modal,
   Portal,
+  Surface,
+  Text,
   TextInput,
   TouchableRipple,
   useTheme,
-  Text,
 } from 'react-native-paper';
 import * as Yup from 'yup';
+import ImagePicker from 'react-native-image-crop-picker';
 import {
-  addRoomTenet,
   addUserRoomsTenantsRecord,
 } from '../../Services/Collections';
-import ImagePicker from 'react-native-image-crop-picker';
 import {
   uploadImageToCloudinary,
   PLACEHOLDER_IMAGE_URL,
 } from '../../Utils/cloudinaryHelper';
 import {useTypedSelector} from '../../Store/MainStore';
 import {selectSelectedRoom} from '../../Store/Slices/AuthSlice';
+import KeyboardAwareScrollView from '../KeyboardAwareScrollView';
+
 const AddTenetRecordModal = ({visible, hideModal, editData}) => {
   const [loading, setLoading] = useState(false);
   const {colors} = useTheme();
-  const styles = getStyles(colors);
   const room = useTypedSelector(selectSelectedRoom);
 
   const initialValue = {
@@ -48,10 +48,10 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
   const validationSchema = Yup.object().shape({
     newReading: Yup.number()
       .min(
-        Number(room.startReading),
-        `New reading must be greater than ${room.startReading}`,
+        Number(room?.startReading || 0),
+        `New reading must be greater than starting reading (${room?.startReading || 0})`,
       )
-      .required('New Reading is required!'),
+      .required('New meter reading is required!'),
     image: Yup.string(),
     note: Yup.string(),
     isPaid: Yup.bool(),
@@ -61,14 +61,13 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
     try {
       setLoading(true);
       let url = '';
-      if (values.image === '') {
-        // Use Cloudinary placeholder image
+      if (!values.image) {
         url = PLACEHOLDER_IMAGE_URL;
       } else {
         url = await uploadAndReturnCloudinaryLink(values.image);
       }
 
-      const response = await addUserRoomsTenantsRecord({...values, url});
+      await addUserRoomsTenantsRecord({...values, url});
       setLoading(false);
       hideModal();
     } catch (error) {
@@ -76,17 +75,16 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
       console.log('🚀 ~ _onAddPress=async ~ error:', error);
     }
   };
+
   const openCamera = setFieldValue => {
     ImagePicker.openCamera({
-      width: 300,
-      height: 100,
+      width: 600,
+      height: 400,
       cropping: true,
-      compressImageQuality: 0.4,
+      compressImageQuality: 0.5,
     })
       .then(image => {
         setFieldValue('image', image?.path);
-        // uploadAndReturnFirestoreLink(image);
-        console.log(image.path);
       })
       .catch(err => {
         console.log('🚀 ~ openCamera ~ err:', err);
@@ -94,268 +92,327 @@ const AddTenetRecordModal = ({visible, hideModal, editData}) => {
   };
 
   const requestCameraPermission = async setFieldValue => {
+    if (Platform.OS === 'ios') {
+      openCamera(setFieldValue);
+      return;
+    }
     try {
       const granted = await PermissionsAndroid.request(
         PermissionsAndroid.PERMISSIONS.CAMERA,
         {
-          title: 'Cool Photo App Camera Permission',
-          message:
-            'Cool Photo App needs access to your camera ' +
-            'so you can take awesome pictures.',
-          buttonNeutral: 'Ask Me Later',
+          title: 'Camera Permission Required',
+          message: 'App needs access to camera to snap meter reading photos.',
+          buttonPositive: 'Allow',
           buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
         },
       );
       if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('You can use the camera');
         openCamera(setFieldValue);
-      } else {
-        console.log('Camera permission denied');
       }
     } catch (err) {
       console.warn(err);
     }
   };
 
-  /**
-   * Upload image to Cloudinary and return the URL
-   * @param {string} imageData - Local file path of the image
-   * @returns {Promise<string>} - Returns the secure URL of the uploaded image
-   */
   const uploadAndReturnCloudinaryLink = async imageData => {
-    console.log('Uploading to Cloudinary:', imageData);
-
     try {
       const url = await uploadImageToCloudinary(imageData);
-      console.log('Cloudinary URL:', url);
       return url;
     } catch (error) {
       console.error('Cloudinary upload error:', error);
       throw error;
     }
   };
-  return (
-    // <Portal>
-    <Modal
-      visible={visible}
-      onDismiss={hideModal}
-      contentContainerStyle={styles.containerStyle}>
-      <View style={styles.headerContainer}>
-        <Text style={styles.heading}>
-          {editData?.roomId ? 'Edit Tenet' : 'Add new record'}
-        </Text>
-        <IconButton icon="close" onPress={hideModal} size={20} />
-      </View>
 
-      <ScrollView>
-        <Formik
-          initialValues={initialValue}
-          onSubmit={_onAddPress}
-          validationSchema={validationSchema}>
-          {({
-            handleChange,
-            handleBlur,
-            handleSubmit,
-            values,
-            errors,
-            setFieldValue,
-          }) => {
-            return (
-              <View>
-                <View
-                  style={[
-                    styles.imageCOntainer,
-                    {
-                      borderBottomColor: errors.image
-                        ? colors.error
-                        : colors.outlineVariant,
-                    },
-                  ]}>
-                  {values?.image ? (
-                    <TouchableRipple
-                      style={styles.imageBox}
-                      onPress={() => requestCameraPermission(setFieldValue)}>
-                      <>
+  return (
+    <Portal>
+      <Modal
+        visible={visible}
+        onDismiss={hideModal}
+        contentContainerStyle={styles.sheetContainer}>
+        <View style={styles.sheetPill} />
+
+        <View style={{flex: 1}}>
+          <View style={styles.headerContainer}>
+            <View style={styles.titleRow}>
+              <Icon source="counter" size={24} color={colors.primary} />
+              <Text style={styles.heading}>
+                {editData?.recordId ? 'Edit Meter Reading' : 'Log Meter Reading'}
+              </Text>
+            </View>
+            <IconButton icon="close" onPress={hideModal} size={20} />
+          </View>
+
+          <Formik
+            initialValues={initialValue}
+            onSubmit={_onAddPress}
+            validationSchema={validationSchema}>
+            {({
+              handleChange,
+              handleBlur,
+              handleSubmit,
+              values,
+              errors,
+              setFieldValue,
+            }) => {
+              const previousReading = Number(room?.startReading || 0);
+              const newReadingVal = Number(values.newReading || 0);
+              const unitsBurned = Math.max(0, newReadingVal - previousReading);
+              const ratePerUnit = Number(room?.perUnit || 10);
+              const electricityBill = unitsBurned * ratePerUnit;
+              const totalMonthDues = electricityBill + Number(room?.rent || 0);
+
+              return (
+                <KeyboardAwareScrollView contentContainerStyle={styles.scrollContent}>
+                  {/* Camera Photo Picker */}
+                  <View style={styles.imagePickerWrapper}>
+                    {values?.image ? (
+                      <View style={styles.imageBox}>
                         <Image
                           source={{uri: values?.image}}
                           style={styles.image}
                         />
                         <IconButton
+                          icon="close-circle"
+                          iconColor="#FFF"
+                          mode="contained"
+                          containerColor="rgba(0,0,0,0.6)"
+                          style={styles.removeImgBtn}
                           onPress={() => setFieldValue('image', '')}
-                          icon={'close'}
-                          mode="contained-tonal"
-                          style={{position: 'absolute', right: 0}}
                         />
-                      </>
-                    </TouchableRipple>
-                  ) : (
-                    <TouchableRipple
-                      onPress={() => requestCameraPermission(setFieldValue)}
-                      style={styles.pressContainer}>
-                      <>
-                        <Icon
-                          source={'camera'}
-                          size={50}
-                          color={colors.primary}
-                        />
-                        <Text style={styles.addImageText}>Add image</Text>
-                      </>
-                    </TouchableRipple>
-                  )}
-                </View>
-                <HelperText type="error" visible={!!errors.image}>
-                  {errors.image}
-                </HelperText>
+                      </View>
+                    ) : (
+                      <TouchableRipple
+                        style={styles.pressContainer}
+                        onPress={() => requestCameraPermission(setFieldValue)}>
+                        <View style={styles.photoPromptContainer}>
+                          <Icon
+                            source="camera-plus-outline"
+                            size={36}
+                            color={colors.primary}
+                          />
+                          <Text style={styles.addImageText}>
+                            Snap Meter Reading Photo (Optional)
+                          </Text>
+                        </View>
+                      </TouchableRipple>
+                    )}
+                  </View>
 
-                <TextInput
-                  label={'New Reading'}
-                  onChangeText={handleChange('newReading')}
-                  onBlur={handleBlur('newReading')}
-                  value={values.newReading}
-                  error={!!errors.newReading}
-                  errorText={errors.newReading}
-                  autoCapitalize="none"
-                  keyboardType="phone-pad"
-                />
-                <HelperText type="error" visible={!!errors.newReading}>
-                  {errors.newReading}
-                </HelperText>
+                  <TextInput
+                    label="Current Meter Reading"
+                    mode="outlined"
+                    keyboardType="number-pad"
+                    left={<TextInput.Icon icon="counter" />}
+                    onChangeText={handleChange('newReading')}
+                    onBlur={handleBlur('newReading')}
+                    value={values.newReading}
+                    error={!!errors.newReading}
+                    style={styles.input}
+                  />
+                  <HelperText type="error" visible={!!errors.newReading}>
+                    {errors.newReading}
+                  </HelperText>
 
-                <View style={styles.textInfoContainer}>
-                  <Text style={styles.title}>Old Reading</Text>
-                  <Text>{Number(room.startReading)}</Text>
-                </View>
-                <View style={styles.textInfoContainer}>
-                  <Text style={styles.title}>New Reading</Text>
-                  <Text>{Number(values?.newReading)}</Text>
-                </View>
-                <View style={styles.textInfoContainer}>
-                  <Text style={styles.title}>Units Used</Text>
-                  <Text>
-                    {values?.newReading
-                      ? Number(values?.newReading) - Number(room.startReading)
-                      : '0'}
-                  </Text>
-                </View>
-                <View style={styles.textInfoContainer}>
-                  <Text style={styles.title}>Amount per Unit</Text>
-                  <Text>₹ {Number(room?.perUnit)}</Text>
-                </View>
-                <View style={styles.textInfoContainerTotal}>
-                  <Text style={styles.totalBillTitle}>Electricity Bill</Text>
-                  <Text style={styles.totalBillAmount}>
-                    ₹{' '}
-                    {values?.newReading
-                      ? (Number(values?.newReading) -
-                          Number(room.startReading)) *
-                        Number(room?.perUnit)
-                      : '0'}
-                  </Text>
-                </View>
-                <TextInput
-                  multiline
-                  numberOfLines={3}
-                  label={'Note'}
-                  onChangeText={handleChange('note')}
-                  onBlur={handleBlur('note')}
-                  value={values.note}
-                  error={!!errors.note}
-                  errorText={errors.note}
-                  autoCapitalize="none"
-                  keyboardType="default"
-                />
-                <HelperText type="error" visible={!!errors.note}>
-                  {errors.note}
-                </HelperText>
-                <Button
-                  mode="contained"
-                  onPress={handleSubmit}
-                  loading={loading}
-                  disabled={loading}>
-                  {'Save'}
-                </Button>
-              </View>
-            );
-          }}
-        </Formik>
-      </ScrollView>
-    </Modal>
-    // </Portal>
+                  {/* Live Calculation Preview Box */}
+                  <Surface style={styles.calcPreviewBox}>
+                    <Text style={styles.calcBoxTitle}>Bill Computation Preview</Text>
+                    <View style={styles.calcRow}>
+                      <Text style={styles.calcLabel}>Previous Reading</Text>
+                      <Text style={styles.calcValue}>{previousReading}</Text>
+                    </View>
+                    <View style={styles.calcRow}>
+                      <Text style={styles.calcLabel}>New Reading</Text>
+                      <Text style={styles.calcValue}>{newReadingVal || '-'}</Text>
+                    </View>
+                    <View style={styles.calcRow}>
+                      <Text style={styles.calcLabel}>Units Consumed</Text>
+                      <Text style={[styles.calcValue, {color: '#4F46E5'}]}>
+                        {unitsBurned} units
+                      </Text>
+                    </View>
+                    <View style={styles.calcRow}>
+                      <Text style={styles.calcLabel}>Electricity Dues (₹{ratePerUnit}/unit)</Text>
+                      <Text style={styles.calcValue}>₹ {electricityBill}</Text>
+                    </View>
+                    <View style={styles.calcDivider} />
+                    <View style={styles.totalDuesRow}>
+                      <Text style={styles.totalDuesLabel}>Total Dues (+ Rent ₹{room?.rent || 0})</Text>
+                      <Text style={styles.totalDuesValue}>₹ {totalMonthDues}</Text>
+                    </View>
+                  </Surface>
+
+                  <TextInput
+                    label="Notes / Remarks (Optional)"
+                    mode="outlined"
+                    multiline
+                    numberOfLines={2}
+                    left={<TextInput.Icon icon="text-box-outline" />}
+                    onChangeText={handleChange('note')}
+                    onBlur={handleBlur('note')}
+                    value={values.note}
+                    style={[styles.input, {marginTop: 10}]}
+                  />
+
+                  <Button
+                    mode="contained"
+                    icon="check-circle"
+                    style={styles.submitBtn}
+                    labelStyle={{fontWeight: '700'}}
+                    onPress={handleSubmit}
+                    loading={loading}
+                    disabled={loading}>
+                    Save Reading & Generate Bill
+                  </Button>
+                </KeyboardAwareScrollView>
+              );
+            }}
+          </Formik>
+        </View>
+      </Modal>
+    </Portal>
   );
 };
 
 export default AddTenetRecordModal;
-const getStyles = (colors, errors) => {
-  return StyleSheet.create({
-    containerStyle: {
-      marginHorizontal: 20,
-      backgroundColor: 'white',
-      paddingHorizontal: 20,
-      paddingBottom: 30,
-      borderRadius: 8,
-    },
-    heading: {
-      fontSize: 18,
-      color: '#000',
-      fontWeight: '600',
-      textTransform: 'capitalize',
-    },
-    headerContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginBottom: 20,
-      alignItems: 'center',
-    },
-    imageCOntainer: {
-      height: 200,
-      borderTopLeftRadius: 4,
-      borderTopRightRadius: 4,
-      backgroundColor: colors.surfaceVariant,
-      borderBottomWidth: 1,
-    },
-    pressContainer: {
-      alignItems: 'center',
-      flex: 1,
-      justifyContent: 'center',
-    },
-    addImageText: {color: colors.primary, fontWeight: '400'},
-    textInfoContainer: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginVertical: 5,
-    },
-    title: {
-      fontSize: 14,
-      fontWeight: '500',
-    },
-    totalBillTitle: {
-      fontSize: 16,
-      fontWeight: '500',
-    },
-    textInfoContainerTotal: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      marginVertical: 5,
-      borderTopColor: colors.primary,
-      borderTopWidth: 1,
-      paddingVertical: 10,
-    },
-    totalBillAmount: {
-      fontSize: 16,
-      fontWeight: '500',
-      color: colors.primary,
-    },
-    image: {
-      flex: 1,
-      resizeMode: 'stretch',
-      borderTopLeftRadius: 4,
-      borderTopRightRadius: 4,
-    },
-    imageBox: {
-      flex: 1,
-      borderTopLeftRadius: 4,
-      borderTopRightRadius: 4,
-    },
-  });
-};
+
+const styles = StyleSheet.create({
+  sheetContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 20,
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '85%',
+  },
+  sheetPill: {
+    width: 38,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: '#CBD5E1',
+    alignSelf: 'center',
+    marginBottom: 10,
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  heading: {
+    fontSize: 18,
+    color: '#0F172A',
+    fontWeight: '700',
+    marginLeft: 8,
+  },
+  scrollContent: {
+    paddingBottom: 60,
+    flexGrow: 1,
+  },
+  imagePickerWrapper: {
+    height: 130,
+    borderRadius: 14,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderStyle: 'dashed',
+    overflow: 'hidden',
+    marginBottom: 14,
+  },
+  pressContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  photoPromptContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  addImageText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
+    marginTop: 6,
+  },
+  imageBox: {
+    width: '100%',
+    height: '100%',
+  },
+  image: {
+    width: '100%',
+    height: '100%',
+  },
+  removeImgBtn: {
+    position: 'absolute',
+    top: 6,
+    right: 6,
+  },
+  input: {
+    backgroundColor: '#FFF',
+  },
+  calcPreviewBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    padding: 14,
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  calcBoxTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#334155',
+    marginBottom: 8,
+  },
+  calcRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 2,
+  },
+  calcLabel: {
+    fontSize: 12,
+    color: '#64748B',
+  },
+  calcValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  calcDivider: {
+    height: 1,
+    backgroundColor: '#CBD5E1',
+    marginVertical: 8,
+  },
+  totalDuesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  totalDuesLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  totalDuesValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#4F46E5',
+  },
+  submitBtn: {
+    marginTop: 16,
+    marginBottom: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
+});

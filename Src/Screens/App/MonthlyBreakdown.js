@@ -1,7 +1,23 @@
 import moment from 'moment';
 import React, {useEffect, useState, useCallback, useMemo} from 'react';
-import {FlatList, Image, Pressable, RefreshControl, View} from 'react-native';
-import {FAB, Icon, IconButton, Text, useTheme} from 'react-native-paper';
+import {
+  FlatList,
+  Image,
+  RefreshControl,
+  StyleSheet,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import LinearGradient from 'react-native-linear-gradient';
+import {
+  Button,
+  Chip,
+  Icon,
+  IconButton,
+  Surface,
+  Text,
+  useTheme,
+} from 'react-native-paper';
 import Container from '../../Components/Container';
 import EmptyComponent from '../../Components/EmptyComponent';
 import Header from '../../Components/Header/Header';
@@ -10,6 +26,7 @@ import AddTenetRecordModal from '../../Components/Modals/AddTenetRecordModal';
 import MyDialog from '../../Components/Modals/Dialog';
 import PartialPaymentModal from '../../Components/Modals/PartialPaymentModal';
 import ShareBillModal from '../../Components/Modals/ShareBillModal';
+import SuccessModal from '../../Components/Modals/SuccessModal';
 import VirtualizedScrollView from '../../Components/VirtualisedScroll';
 import {
   getUserRoomsTenantsRecord,
@@ -29,7 +46,6 @@ import {
   sendWhatsAppMessage,
 } from '../../Utils/helperFunction';
 import RoutesName from '../../Utils/Resource/RoutesName';
-import {getStyles} from '../../Utils/Styles/monthlyBreakdownStyles';
 
 const MonthlyBreakdown = ({navigation}) => {
   const selectedRoomTenets = useTypedSelector(selectSelectedTenant);
@@ -38,7 +54,7 @@ const MonthlyBreakdown = ({navigation}) => {
   const selectedRoom = useTypedSelector(selectSelectedRoom);
   const selectedRoomTenetRecords = useTypedSelector(selectRoomTenantRecords);
   const {colors} = useTheme();
-  const styles = getStyles(colors);
+
   const [visible, setVisible] = useState(false);
   const [partialPaymentVisible, setPartialPaymentVisible] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
@@ -46,6 +62,11 @@ const MonthlyBreakdown = ({navigation}) => {
   const [loading, setLoading] = useState(false);
   const [shareModalVisible, setShareModalVisible] = useState(false);
   const [selectedShareRecord, setSelectedShareRecord] = useState(null);
+  const [successModal, setSuccessModal] = useState({
+    visible: false,
+    title: '',
+    subtitle: '',
+  });
 
   const totalPendingAmount = useMemo(() => {
     return selectedRoomTenetRecords.reduce((total, record) => {
@@ -82,10 +103,7 @@ const MonthlyBreakdown = ({navigation}) => {
     }) => {
       const previousPendingAmount =
         Number(totalPendingAmount || 0) - Number(amount || 0);
-      console.log(
-        '🚀 ~ MonthlyBreakdown ~ previousPendingAmount:',
-        previousPendingAmount,
-      );
+
       const message = `Hi ${selectedRoomTenets?.name}
         
 ${
@@ -174,7 +192,13 @@ Please pay your bill on time to mobile number ${
           totalAmount: Number(record?.totalAmount) + Number(selectedRoom?.rent),
         });
         setLoading(false);
+        setSuccessModal({
+          visible: true,
+          title: 'Payment Received!',
+          subtitle: 'The utility bill statement has been marked as fully paid.',
+        });
       } catch (error) {
+        setLoading(false);
         console.log('🚀 ~ MonthlyBreakdown ~ error:', error);
       }
     },
@@ -192,7 +216,13 @@ Please pay your bill on time to mobile number ${
           record: selectedRecord,
         });
         setLoading(false);
+        setSuccessModal({
+          visible: true,
+          title: 'Partial Payment Saved!',
+          subtitle: `Recorded partial payment of ₹${paidAmount}. Remaining due balance: ₹${pendingAmount}`,
+        });
       } catch (error) {
+        setLoading(false);
         console.log('🚀 ~ MonthlyBreakdown ~ error:', error);
       }
     },
@@ -267,134 +297,167 @@ Please pay your bill on time to mobile number ${
   );
 
   const renderItem = useCallback(
-    ({item}) => (
-      <Pressable
-        style={[
-          styles.roomCard,
-          {
-            borderWidth: item.paidStatus ? 0 : 2,
-            borderColor: item.paidStatus ? '#fff' : colors.error,
-          },
-        ]}>
-        <View style={styles.imageContainer}>
-          <Image source={{uri: item?.image}} style={styles.image} />
-          {!item?.paidStatus && (
-            <View style={styles.paymentButtonsContainer}>
-              <IconButton
-                icon={'check'}
+    ({item}) => {
+      const isPaid = item.paidStatus;
+      const isPartial = !isPaid && item.pendingAmount > 0;
+
+      const statusBg = isPaid ? '#DCFCE7' : isPartial ? '#FEF3C7' : '#FEE2E2';
+      const statusText = isPaid ? '#15803D' : isPartial ? '#B45309' : '#B91C1C';
+      const statusLabel = isPaid ? 'Paid' : isPartial ? 'Partial Paid' : 'Unpaid';
+
+      const totalMonthlyBill = Number(item?.totalAmount || 0) + Number(selectedRoom?.rent || 0);
+
+      return (
+        <Surface style={styles.recordCard}>
+          {/* Card Header Row */}
+          <View style={styles.cardHeaderRow}>
+            <View style={styles.monthTitleGroup}>
+              <Icon source="calendar-month" size={20} color={colors.primary} />
+              <Text style={styles.monthTitleText}>
+                {moment(item.createdAt).format('MMMM YYYY')}
+              </Text>
+            </View>
+
+            <View style={[styles.statusBadgePill, {backgroundColor: statusBg}]}>
+              <Text style={[styles.statusBadgeText, {color: statusText}]}>
+                {statusLabel}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.cardDivider} />
+
+          {/* Meter Readings Grid */}
+          <View style={styles.readingsGridBox}>
+            <View style={styles.readingStat}>
+              <Text style={styles.readingLabel}>Previous Meter</Text>
+              <Text style={styles.readingValue}>{item?.previousReading || 0}</Text>
+            </View>
+            <View style={styles.readingStat}>
+              <Text style={styles.readingLabel}>Current Meter</Text>
+              <Text style={styles.readingValue}>{item?.currentReading || 0}</Text>
+            </View>
+            <View style={styles.readingStat}>
+              <Text style={styles.readingLabel}>Units Burned</Text>
+              <Text style={[styles.readingValue, {color: '#4F46E5'}]}>
+                {item?.totalUnitBurned || 0}
+              </Text>
+            </View>
+          </View>
+
+          {/* Utility Financial Breakdown */}
+          <View style={styles.billDetailsContainer}>
+            <View style={styles.billRow}>
+              <Text style={styles.billRowLabel}>Electricity ({item?.totalUnitBurned || 0} units × ₹{item?.perUnit || 10})</Text>
+              <Text style={styles.billRowValue}>₹ {item.totalAmount}</Text>
+            </View>
+
+            <View style={styles.billRow}>
+              <Text style={styles.billRowLabel}>Monthly Room Rent</Text>
+              <Text style={styles.billRowValue}>₹ {selectedRoom?.rent || 0}</Text>
+            </View>
+
+            <View style={styles.totalRow}>
+              <Text style={styles.totalRowLabel}>This Month Dues</Text>
+              <Text style={styles.totalRowValue}>₹ {totalMonthlyBill}</Text>
+            </View>
+
+            {item.pendingAmount > 0 && (
+              <View style={styles.partialRow}>
+                <View style={styles.billRow}>
+                  <Text style={styles.partialLabel}>Partial Paid</Text>
+                  <Text style={styles.partialPaidValue}>
+                    ₹ {totalMonthlyBill - item.pendingAmount}
+                  </Text>
+                </View>
+                <View style={styles.billRow}>
+                  <Text style={styles.partialLabel}>Remaining Due</Text>
+                  <Text style={styles.partialDueValue}>
+                    ₹ {item.pendingAmount}
+                  </Text>
+                </View>
+              </View>
+            )}
+          </View>
+
+          {/* Meter Image Thumbnail if exists */}
+          {item?.image ? (
+            <View style={styles.imageBox}>
+              <Image source={{uri: item?.image}} style={styles.meterImage} />
+              <View style={styles.imageBadge}>
+                <Icon source="camera" size={12} color="#FFF" />
+                <Text style={styles.imageBadgeText}>Meter Photo Captured</Text>
+              </View>
+            </View>
+          ) : null}
+
+          {/* Payment Actions Row (If Unpaid / Partial) */}
+          {!isPaid ? (
+            <View style={styles.paymentActionsRow}>
+              <Button
                 mode="contained"
+                icon="check-circle"
+                buttonColor="#10B981"
+                textColor="#FFFFFF"
+                style={styles.payBtn}
+                labelStyle={{fontWeight: '700', fontSize: 12}}
                 onPress={() => handleMarkAsPaid(item)}>
-                <Icon name="check" size={20} color="#fff" />
-              </IconButton>
-              <IconButton
+                Mark Full Paid
+              </Button>
+
+              <Button
+                mode="outlined"
+                icon="cash-plus"
+                textColor="#D97706"
+                style={[styles.payBtn, {borderColor: '#F59E0B'}]}
+                labelStyle={{fontWeight: '700', fontSize: 12}}
                 onPress={() => {
                   setSelectedRecord(item);
                   setPartialPaymentVisible(true);
-                }}
-                mode="contained"
-                icon={'cash'}>
+                }}>
                 Partial Pay
-              </IconButton>
+              </Button>
             </View>
-          )}
-          <View
-            style={[
-              styles.statusContainer,
-              {
-                backgroundColor: item.paidStatus
-                  ? colors.primary
-                  : colors.error,
-              },
-            ]}>
-            <Text style={styles.statusText}>
-              {item.paidStatus
-                ? 'Paid'
-                : item.pendingAmount > 0
-                  ? 'Partial Paid'
-                  : 'Unpaid'}
-            </Text>
-          </View>
-        </View>
-        <View style={styles.detailContainer}>
-          <Text style={styles.monthText}>
-            {moment(item.createdAt).format('MMMM YYYY')}
-          </Text>
-          <View style={styles.textInfoContainer}>
-            <Text style={styles.title}>New Reading</Text>
-            <Text>{Number(item.currentReading)}</Text>
-          </View>
-          <View style={styles.textInfoContainer}>
-            <Text style={styles.title}>Old Reading</Text>
-            <Text>{Number(item?.previousReading)}</Text>
-          </View>
-          <View style={styles.textInfoContainer}>
-            <Text style={styles.title}>Units Used</Text>
-            <Text>{Number(item?.totalUnitBurned)}</Text>
-          </View>
-          <View style={styles.textInfoContainer}>
-            <Text style={styles.title}>Amount per Unit</Text>
-            <Text>₹ {Number(item?.perUnit)}</Text>
-          </View>
-          <View style={styles.textInfoContainerTotal}>
-            <Text style={styles.totalBillTitle}>Electricity Bill</Text>
-            <Text style={styles.totalBillAmount}>₹ {item.totalAmount}</Text>
-          </View>
-          <View style={styles.textInfoContainerTotal}>
-            <Text style={styles.totalBillTitle}>This Month Total</Text>
-            <Text style={styles.totalBillAmount}>
-              ₹ {Number(item?.totalAmount) + Number(selectedRoom?.rent)}
-            </Text>
-          </View>
-          {item.pendingAmount > 0 && (
-            <>
-              <View style={styles.textInfoContainerTotal}>
-                <Text style={styles.totalBillTitle}>Partial Paid Amount</Text>
-                <Text style={[styles.totalBillAmount, {color: colors.error}]}>
-                  ₹{' '}
-                  {Number(item?.totalAmount) +
-                    Number(selectedRoom?.rent) -
-                    item.pendingAmount}
-                </Text>
-              </View>
-              <View style={styles.textInfoContainerTotal}>
-                <Text style={styles.totalBillTitle}>Pending Amount</Text>
-                <Text style={[styles.totalBillAmount, {color: colors.error}]}>
-                  ₹ {item.pendingAmount}
-                </Text>
-              </View>
-            </>
-          )}
-        </View>
-        {!item?.paidStatus && (
-          <View style={styles.actionButtonsContainer}>
+          ) : null}
+
+          {/* Reminders & Sharing Action Buttons Bar */}
+          <View style={styles.shareActionsBar}>
             <IconButton
-              icon={'whatsapp'}
-              mode="contained"
-              onPress={() => handleWhatsAppReminder(item)}>
-              Send Reminder
-            </IconButton>
+              icon="whatsapp"
+              mode="contained-tonal"
+              containerColor="#DCFCE7"
+              iconColor="#15803D"
+              size={20}
+              onPress={() => handleWhatsAppReminder(item)}
+            />
             <IconButton
-              icon={'message-processing'}
-              mode="contained"
-              onPress={() => handleSMSReminder(item)}>
-              Send Reminder
-            </IconButton>
+              icon="message-processing-outline"
+              mode="contained-tonal"
+              containerColor="#EEF2FF"
+              iconColor="#4F46E5"
+              size={20}
+              onPress={() => handleSMSReminder(item)}
+            />
             <IconButton
-              icon={'phone'}
-              mode="contained"
-              onPress={() => onOpenDialer(selectedRoomTenets?.phone)}>
-              Send Reminder
-            </IconButton>
-            <IconButton
-              icon={'share-variant'}
-              mode="contained"
+              icon="phone-outline"
+              mode="contained-tonal"
+              containerColor="#F1F5F9"
+              iconColor="#475569"
+              size={20}
+              onPress={() => onOpenDialer(selectedRoomTenets?.phone)}
+            />
+            <Button
+              mode="tonal"
+              icon="share-variant"
+              style={{flex: 1, marginLeft: 4}}
+              labelStyle={{fontWeight: '700', fontSize: 12}}
               onPress={() => handleShareBill(item)}>
               Share Bill
-            </IconButton>
+            </Button>
           </View>
-        )}
-      </Pressable>
-    ),
+        </Surface>
+      );
+    },
     [
       selectedRoom,
       colors,
@@ -403,20 +466,6 @@ Please pay your bill on time to mobile number ${
       handleShareBill,
       selectedRoomTenets,
       handleMarkAsPaid,
-      styles.detailContainer,
-      styles.image,
-      styles.imageContainer,
-      styles.monthText,
-      styles.roomCard,
-      styles.statusContainer,
-      styles.statusText,
-      styles.textInfoContainer,
-      styles.textInfoContainerTotal,
-      styles.title,
-      styles.totalBillAmount,
-      styles.totalBillTitle,
-      styles.paymentButtonsContainer,
-      styles.actionButtonsContainer,
     ],
   );
 
@@ -431,9 +480,18 @@ Please pay your bill on time to mobile number ${
 
   return (
     <Container>
-      <Header title={selectedRoomTenets?.name} />
+      <Header
+        title={selectedRoomTenets?.name || 'Tenant Statement'}
+        subtitle="Monthly meter readings & billing dues"
+        right="counter"
+        rightText="Log Reading"
+        rightIconPress={() => setVisible(true)}
+      />
+
+      {loading && <Loader message="Updating payment status..." />}
+
       <VirtualizedScrollView
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={{padding: 16, paddingBottom: 150}}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -441,28 +499,44 @@ Please pay your bill on time to mobile number ${
             colors={[colors.primary]}
           />
         }>
+        {/* Total Payable Dues Gradient Banner */}
         {totalPendingAmount > 0 && (
-          <View style={styles.pendingSummaryContainer}>
-            <Text style={styles.pendingSummaryText}>
-              Total Payable: ₹{totalPendingAmount}
-            </Text>
-          </View>
+          <LinearGradient
+            colors={['#EF4444', '#DC2626']}
+            useAngle={true}
+            angle={135}
+            style={styles.pendingDuesBanner}>
+            <View style={styles.bannerIconBox}>
+              <Icon source="alert-circle-outline" size={24} color="#FFF" />
+            </View>
+            <View style={{marginLeft: 12, flex: 1}}>
+              <Text style={styles.bannerTitle}>Total Outstanding Dues</Text>
+              <Text style={styles.bannerAmount}>₹ {totalPendingAmount}</Text>
+            </View>
+          </LinearGradient>
         )}
+
         <FlatList
           data={selectedRoomTenetRecords}
-          ItemSeparatorComponent={<View style={styles.separator} />}
+          keyExtractor={(item, index) => item?.recordId || index.toString()}
+          ItemSeparatorComponent={() => <View style={{height: 16}} />}
           renderItem={renderItem}
           ListEmptyComponent={
-            <EmptyComponent title="No Bill Record Added Yet!" />
+            <EmptyComponent
+              title="No Monthly Bills Logged Yet"
+              subtitle="Log your first meter reading to compute units burned, generate the monthly bill, and send reminders."
+              actionLabel="Add Monthly Reading"
+              onActionPress={() => setVisible(true)}
+            />
           }
         />
       </VirtualizedScrollView>
-      {loading && <Loader />}
-      <FAB icon="plus" style={styles.fab} onPress={() => setVisible(true)} />
+
       <AddTenetRecordModal
         visible={visible}
         hideModal={() => setVisible(false)}
       />
+
       <PartialPaymentModal
         visible={partialPaymentVisible}
         hideModal={() => {
@@ -477,12 +551,20 @@ Please pay your bill on time to mobile number ${
         }
         recordId={selectedRecord?.recordId}
       />
+
+      <SuccessModal
+        visible={successModal.visible}
+        hideModal={() => setSuccessModal({visible: false, title: '', subtitle: ''})}
+        title={successModal.title}
+        subtitle={successModal.subtitle}
+      />
+
       <MyDialog
-        title={'Update Your Details'}
-        body={"User details not found, you need to update you'r details first!"}
+        title="Update Your Contact Details"
+        body="Your Phone and UPI address are missing. Please update your profile so tenants receive payment instructions."
         visible={userDialog}
         setVisible={setUserDialog}
-        doneTitle="Update"
+        doneTitle="Update Profile"
         donePress={() => {
           setUserDialog(false);
           navigation.navigate(RoutesName.BOTTOM_TABS, {
@@ -490,6 +572,7 @@ Please pay your bill on time to mobile number ${
           });
         }}
       />
+
       <ShareBillModal
         visible={shareModalVisible}
         hideModal={() => {
@@ -552,3 +635,194 @@ Please pay your bill on time to mobile number ${
 };
 
 export default MonthlyBreakdown;
+
+const styles = StyleSheet.create({
+  pendingDuesBanner: {
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    elevation: 3,
+  },
+  bannerIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bannerTitle: {
+    color: '#FEE2E2',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  bannerAmount: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '800',
+    marginTop: 1,
+  },
+  recordCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    elevation: 3,
+    shadowColor: '#0F172A',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+  },
+  cardHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  monthTitleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  monthTitleText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginLeft: 8,
+  },
+  statusBadgePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  statusBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  cardDivider: {
+    height: 1,
+    backgroundColor: '#F1F5F9',
+    marginVertical: 12,
+  },
+  readingsGridBox: {
+    flexDirection: 'row',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    padding: 10,
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  readingStat: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  readingLabel: {
+    fontSize: 11,
+    color: '#64748B',
+    fontWeight: '500',
+  },
+  readingValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0F172A',
+    marginTop: 2,
+  },
+  billDetailsContainer: {
+    marginBottom: 12,
+  },
+  billRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 3,
+  },
+  billRowLabel: {
+    fontSize: 13,
+    color: '#64748B',
+  },
+  billRowValue: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#334155',
+  },
+  totalRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
+  },
+  totalRowLabel: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0F172A',
+  },
+  totalRowValue: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#4F46E5',
+  },
+  partialRow: {
+    marginTop: 6,
+    paddingTop: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+  partialLabel: {
+    fontSize: 12,
+    color: '#EF4444',
+    fontWeight: '600',
+  },
+  partialPaidValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#10B981',
+  },
+  partialDueValue: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#EF4444',
+  },
+  imageBox: {
+    height: 120,
+    borderRadius: 12,
+    overflow: 'hidden',
+    marginBottom: 12,
+  },
+  meterImage: {
+    width: '100%',
+    height: '100%',
+  },
+  imageBadge: {
+    position: 'absolute',
+    bottom: 8,
+    left: 8,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  imageBadgeText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  paymentActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  payBtn: {
+    flex: 1,
+    borderRadius: 10,
+  },
+  shareActionsBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#F1F5F9',
+  },
+});

@@ -100,6 +100,7 @@ export const getStyles = colors =>
     },
     scrollContent: {
       padding: 20,
-      paddingBottom: 100,
+      paddingBottom: 150,
     },
+
   });
