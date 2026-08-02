@@ -95,7 +95,7 @@ const SplashScreen = () => {
               Secure Cloud Property Sync
             </Text>
           </View>
-          <Text style={styles.versionText}>v1.0.0</Text>
+          <Text style={styles.versionText}>v1.2.0</Text>
         </View>
       </LinearGradient>
     </View>

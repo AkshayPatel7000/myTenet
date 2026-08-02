@@ -263,7 +263,7 @@ const Profile = () => {
                 <Icon source="cellphone-cog" size={20} color="#64748B" />
                 <Text style={styles.settingText}>Application Version</Text>
               </View>
-              <Text style={styles.settingValue}>v1.0.0</Text>
+              <Text style={styles.settingValue}>v1.2.0</Text>
             </View>
             <View style={styles.settingRow}>
               <View style={{flexDirection: 'row', alignItems: 'center'}}>
