@@ -617,6 +617,88 @@ const addUnifiedPropertyAndTenant = async values => {
   }
 };
 
+/**
+ * Submit a support/issue message from the user.
+ * Stored under: support_issues/{userId}/messages/{messageId}
+ */
+const submitSupportMessage = async messageData => {
+  try {
+    const userId = store?.getState()?.AuthSlice?.userProfile?.uid;
+    if (!userId) {
+      showError('User session invalid');
+      return;
+    }
+    await firestore()
+      .collection('support_issues')
+      .doc(userId)
+      .collection('messages')
+      .add({
+        ...messageData,
+        userId,
+        userEmail: store?.getState()?.AuthSlice?.userProfile?.email || '',
+        userName: store?.getState()?.AuthSlice?.userProfile?.name || '',
+        status: 'open',
+        createdAt: messageData.createdAt || Date.now(),
+      });
+  } catch (error) {
+    console.log('\uD83D\uDE80 ~ submitSupportMessage ~ error:', error);
+    showError('Failed to send message. Please try again.');
+  }
+};
+
+/**
+ * Fetch all support messages for the current user.
+ * Returns array sorted oldest-first.
+ */
+const getSupportMessages = async () => {
+  try {
+    const userId = store?.getState()?.AuthSlice?.userProfile?.uid;
+    if (!userId) return [];
+    const snapshot = await firestore()
+      .collection('support_issues')
+      .doc(userId)
+      .collection('messages')
+      .orderBy('createdAt', 'asc')
+      .get();
+    if (snapshot?.docs) {
+      return snapshot.docs.map(doc => ({...doc.data(), id: doc.id}));
+    }
+    return [];
+  } catch (error) {
+    console.log('\uD83D\uDE80 ~ getSupportMessages ~ error:', error);
+    return [];
+  }
+};
+
+/**
+ * Real-time subscription to the current user's support messages.
+ * Calls `onMessages(messagesArray)` whenever Firestore updates.
+ * Returns the unsubscribe function — call it to stop listening.
+ */
+const subscribeSupportMessages = onMessages => {
+  const userId = store?.getState()?.AuthSlice?.userProfile?.uid;
+  if (!userId) return () => {};
+
+  const unsubscribe = firestore()
+    .collection('support_issues')
+    .doc(userId)
+    .collection('messages')
+    .orderBy('createdAt', 'asc')
+    .onSnapshot(
+      snapshot => {
+        if (snapshot?.docs) {
+          const msgs = snapshot.docs.map(d => ({...d.data(), id: d.id}));
+          onMessages(msgs);
+        }
+      },
+      error => {
+        console.log('🚀 ~ subscribeSupportMessages ~ error:', error);
+      },
+    );
+
+  return unsubscribe;
+};
+
 export {
   addUser,
   getUser,
@@ -636,5 +718,8 @@ export {
   removeRoomTenet,
   removeUserRoom,
   addUnifiedPropertyAndTenant,
+  submitSupportMessage,
+  getSupportMessages,
+  subscribeSupportMessages,
 };
 

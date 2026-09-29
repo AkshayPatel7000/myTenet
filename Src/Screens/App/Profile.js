@@ -36,12 +36,14 @@ import {Formik} from 'formik';
 import * as Yup from 'yup';
 import {updateUser} from '../../Services/Collections';
 import MyDialog from '../../Components/Modals/Dialog';
+import SupportChatModal from '../../Components/Modals/SupportChatModal';
 import auth from '@react-native-firebase/auth';
 import {GoogleSignin} from '@react-native-google-signin/google-signin';
 
 const Profile = () => {
   const {colors} = useTheme();
   const [visible, setVisible] = useState(false);
+  const [supportVisible, setSupportVisible] = useState(false);
   const user = useTypedSelector(selectUserProfile);
   const isDarkMode = useTypedSelector(selectIsDarkMode);
   const [loading, setLoading] = useState(false);
@@ -88,6 +90,10 @@ const Profile = () => {
     await LocalStorage.setIsDarkTheme(val);
   };
 
+  const handleReportProblem = () => {
+    setSupportVisible(true);
+  };
+
   const getInitials = (name = '') => {
     if (!name) return 'U';
     const parts = name.split(' ');
@@ -112,6 +118,11 @@ const Profile = () => {
         title="Log Out"
         body="Are you sure you want to log out of your account?"
         doneTitle="Log Out"
+      />
+
+      <SupportChatModal
+        visible={supportVisible}
+        onDismiss={() => setSupportVisible(false)}
       />
 
       <KeyboardAvoidingView
@@ -274,6 +285,28 @@ const Profile = () => {
             </View>
           </Surface>
 
+          {/* Application Support */}
+          <Surface style={styles.settingsCard}>
+            <Text style={styles.sectionTitle}>Application Support</Text>
+            <TouchableOpacity
+              style={styles.settingRow}
+              onPress={handleReportProblem}
+              activeOpacity={0.7}>
+              <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                <Icon source="bug-outline" size={20} color="#EF4444" />
+                <View style={{marginLeft: 10}}>
+                  <Text style={[styles.settingText, {marginLeft: 0}]}>
+                    Report a Problem
+                  </Text>
+                  <Text style={styles.supportSubText}>
+                    Chat with our support team in-app
+                  </Text>
+                </View>
+              </View>
+              <Icon source="chevron-right" size={20} color="#64748B" />
+            </TouchableOpacity>
+          </Surface>
+
           {/* Log Out Button */}
           <Button
             mode="outlined"
@@ -405,5 +438,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 4,
     marginTop: 6,
+  },
+  supportSubText: {
+    fontSize: 11,
+    color: '#94A3B8',
+    fontWeight: '400',
+    marginTop: 1,
   },
 });

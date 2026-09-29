@@ -20,6 +20,7 @@ import {
 import {Formik} from 'formik';
 import * as Yup from 'yup';
 import KeyboardAwareScrollView from '../KeyboardAwareScrollView';
+import {addUnifiedPropertyAndTenant} from '../../Services/Collections';
 
 const UnifiedQuickSetupModal = ({visible, hideModal}) => {
   const {colors} = useTheme();
@@ -64,12 +65,15 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
     hideModal();
   };
 
-  const _onSubmitAll = async values => {
+  const _onSubmitAll = async (values, resetForm) => {
     try {
       setLoading(true);
       const success = await addUnifiedPropertyAndTenant(values);
       setLoading(false);
       if (success) {
+        if (resetForm) {
+          resetForm();
+        }
         handleClose();
       }
     } catch (error) {
@@ -123,7 +127,7 @@ const UnifiedQuickSetupModal = ({visible, hideModal}) => {
 
           <Formik
             initialValues={initialValues}
-            onSubmit={_onSubmitAll}
+            onSubmit={(values, {resetForm}) => _onSubmitAll(values, resetForm)}
             validationSchema={
               step === 1
                 ? validationSchemaStep1
