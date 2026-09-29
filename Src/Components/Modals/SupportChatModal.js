@@ -72,7 +72,6 @@ const SupportChatModal = ({visible, onDismiss}) => {
       setMessages([]);
       setLoading(false);
     }
-
     return () => {
       // Cleanup on unmount
       if (unsubscribeRef.current) {
@@ -307,7 +306,8 @@ const SupportChatModal = ({visible, onDismiss}) => {
                 {
                   backgroundColor:
                     message.trim() && !sending ? '#6366F1' : '#E2E8F0',
-                  shadowColor: message.trim() && !sending ? '#6366F1' : 'transparent',
+                  shadowColor:
+                    message.trim() && !sending ? '#6366F1' : 'transparent',
                 },
               ]}
               onPress={handleSend}
