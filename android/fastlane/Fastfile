@@ -20,6 +20,7 @@ platform :android do
 
     key_file = ENV["PLAY_STORE_JSON_KEY_PATH"]
     key_file = File.expand_path('../pc-api-key.json', __dir__) if key_file.nil? || key_file.empty? || !File.exist?(key_file)
+    key_file = File.expand_path('../../pc-api-key.json', __dir__) if !File.exist?(key_file)
 
     upload_to_play_store(
       track: 'production',
