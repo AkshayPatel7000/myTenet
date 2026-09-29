@@ -2,6 +2,9 @@ name: Deploy Android to Google Play Store Production
 
 on:
   push:
+    branches:
+      - master
+      - main
     tags:
       - 'v*'
   workflow_dispatch:
