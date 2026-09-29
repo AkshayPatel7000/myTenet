@@ -1,4 +1,4 @@
-name: Deploy Android to Google Play Store Production
+name: Deploy Android to Google Play Store (Internal Testing)
 
 on:
   push:
@@ -10,9 +10,9 @@ on:
   workflow_dispatch:
     inputs:
       track:
-        description: 'Play Store Track (production, beta, alpha, internal)'
+        description: 'Play Store Track (internal, alpha, beta, production)'
         required: true
-        default: 'production'
+        default: 'internal'
 
 jobs:
   deploy:
@@ -91,6 +91,7 @@ jobs:
           MYAPP_UPLOAD_KEY_ALIAS: ${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}
           MYAPP_UPLOAD_KEY_PASSWORD: ${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}
           PLAY_STORE_JSON_KEY_PATH: "android/pc-api-key.json"
+          PLAY_STORE_TRACK: ${{ github.event.inputs.track || 'internal' }}
         run: |
           cd android
           bundle exec fastlane deploy

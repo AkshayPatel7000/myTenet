@@ -10,7 +10,7 @@ platform :android do
     )
   end
 
-  desc "Build and Deploy to Google Play Store (Production Track)"
+  desc "Build and Deploy to Google Play Store (Internal Testing Track)"
   lane :deploy do
     gradle(
       task: "bundle",
@@ -22,8 +22,10 @@ platform :android do
     key_file = File.expand_path('../pc-api-key.json', __dir__) if key_file.nil? || key_file.empty? || !File.exist?(key_file)
     key_file = File.expand_path('../../pc-api-key.json', __dir__) if !File.exist?(key_file)
 
+    target_track = ENV["PLAY_STORE_TRACK"] || "internal"
+
     upload_to_play_store(
-      track: 'production',
+      track: target_track,
       json_key: key_file,
       aab: 'app/build/outputs/bundle/release/app-release.aab',
       skip_upload_apk: true,
