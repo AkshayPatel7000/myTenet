@@ -1,2 +1,1 @@
-json_key_file(ENV["PLAY_STORE_JSON_KEY_PATH"] || "pc-api-key.json")
 package_name("com.mytenant")
